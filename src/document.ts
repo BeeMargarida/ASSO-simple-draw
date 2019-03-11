@@ -1,5 +1,6 @@
 import { Shape } from './shape'
 import { Action, CreateCircleAction, CreateRectangleAction, TranslateAction } from './actions'
+import { Render } from './render';
 
 export class SimpleDrawDocument {
     objects = new Array<Shape>()
@@ -22,8 +23,9 @@ export class SimpleDrawDocument {
         }
     }
 
-    draw(ctx: CanvasRenderingContext2D): void {
-        this.objects.forEach(o => o.draw(ctx))
+    draw(render: Render): void {
+        // this.objects.forEach(o => o.draw(ctx))
+        render.draw(...this.objects)
     }
 
     add(r: Shape): void {
