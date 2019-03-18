@@ -7,12 +7,8 @@ export interface Action<T> {
     undo(): void
 }
 
-abstract class CreateAction implements Action<Shape> {
-    readonly shape: Shape // equivalent to Java's final?
-
-    constructor(private doc: SimpleDrawDocument, shape: Shape) {
-        this.shape = shape
-    }
+abstract class CreateShapeAction<S extends Shape> implements Action<Shape> {
+    constructor(private doc: SimpleDrawDocument, public readonly shape: S) { }
 
     do(): Shape {
         this.doc.add(this.shape)
@@ -24,21 +20,16 @@ abstract class CreateAction implements Action<Shape> {
     }
 }
 
-export class CreateCircleAction extends CreateAction {
-    shape: Circle
-
+export class CreateCircleAction extends CreateShapeAction<Circle> {
     constructor(doc: SimpleDrawDocument, private x: number, private y: number, private radius: number) {
         super(doc, new Circle(x, y, radius))
     }
 }
 
-export class CreateRectangleAction extends CreateAction {
-    shape: Rectangle
-
+export class CreateRectangleAction extends CreateShapeAction<Rectangle> {
     constructor(doc: SimpleDrawDocument, private x: number, private y: number, private width: number, private height: number) {
         super(doc, new Rectangle(x, y, width, height))
     }
-
 }
 
 export class TranslateAction implements Action<void> {
