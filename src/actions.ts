@@ -2,15 +2,14 @@ import { Shape, Circle, Rectangle } from './shape'
 import { SimpleDrawDocument } from './document'
 
 export interface Action<T> {
-    readonly shape: Shape
     do(): T
     undo(): void
 }
 
-abstract class CreateShapeAction<S extends Shape> implements Action<Shape> {
+abstract class CreateShapeAction<S extends Shape> implements Action<S> {
     constructor(private doc: SimpleDrawDocument, public readonly shape: S) { }
 
-    do(): Shape {
+    do(): S {
         this.doc.add(this.shape)
         return this.shape
     }
