@@ -7,33 +7,12 @@ export interface Action<T> {
     undo(): void
 }
 
-interface CreateAction extends Action<Shape> {
-    shape: Shape
-}
+abstract class CreateAction implements Action<Shape> {
+    readonly shape: Shape // No private static in TypeScript ?
 
-export class CreateCircleAction implements CreateAction {
-    shape: Circle
+    constructor(private doc: SimpleDrawDocument) {}
 
-    constructor(private doc: SimpleDrawDocument, private x: number, private y: number, private radius: number) {}
-
-    do(): Circle {
-        this.shape = new Circle(this.x, this.y, this.radius)
-        this.doc.add(this.shape)        
-        return this.shape
-    }
-
-    undo() {
-        this.doc.objects = this.doc.objects.filter(o => o !== this.shape)
-    }
-}
-
-export class CreateRectangleAction {
-    shape: Rectangle
-
-    constructor(private doc: SimpleDrawDocument, private x: number, private y: number, private width: number, private height: number) { }
-
-    do(): Rectangle {
-        this.shape = new Rectangle(this.x, this.y, this.width, this.height)
+    do(): Shape {
         this.doc.add(this.shape)
         return this.shape
     }
@@ -41,6 +20,25 @@ export class CreateRectangleAction {
     undo() {
         this.doc.objects = this.doc.objects.filter(o => o !== this.shape)
     }
+}
+
+export class CreateCircleAction extends CreateAction {
+    shape: Circle
+
+    constructor(doc: SimpleDrawDocument, private x: number, private y: number, private radius: number) {
+        super(doc)
+        this.shape = new Circle(this.x, this.y, this.radius)
+    }
+}
+
+export class CreateRectangleAction extends CreateAction {
+    shape: Rectangle
+
+    constructor(doc: SimpleDrawDocument, private x: number, private y: number, private width: number, private height: number) {
+        super(doc)
+        this.shape = new Rectangle(this.x, this.y, this.width, this.height)
+    }
+
 }
 
 export class TranslateAction implements Action<void> {
