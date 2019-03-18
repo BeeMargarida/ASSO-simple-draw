@@ -1,8 +1,10 @@
 import { Action } from "./actions";
 
-export class UndoManager {
-  doStack = new Array<Action<any>>();
-  undoStack = new Array<Action<any>>();
+type UndoableAction<S> = { do(): S; undo(): void }
+
+export class UndoManager<S, A extends UndoableAction<S>> {
+  doStack = new Array<A>();
+  undoStack = new Array<A>();
 
   undo() {
     if (this.doStack.length > 0) {
@@ -20,7 +22,7 @@ export class UndoManager {
     }
   }
 
-  onActionDone(a: Action<any>): void {
+  onActionDone(a: A): void {
     this.doStack.push(a);
     this.undoStack.length = 0;
   }
