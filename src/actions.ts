@@ -2,15 +2,17 @@ import { Shape, Circle, Rectangle } from './shape'
 import { SimpleDrawDocument } from './document'
 
 export interface Action<T> {
-    shape: Shape
+    readonly shape: Shape
     do(): T
     undo(): void
 }
 
 abstract class CreateAction implements Action<Shape> {
-    readonly shape: Shape // No private static in TypeScript ?
+    readonly shape: Shape // equivalent to Java's final?
 
-    constructor(private doc: SimpleDrawDocument) {}
+    constructor(private doc: SimpleDrawDocument, shape: Shape) {
+        this.shape = shape
+    }
 
     do(): Shape {
         this.doc.add(this.shape)
@@ -26,8 +28,7 @@ export class CreateCircleAction extends CreateAction {
     shape: Circle
 
     constructor(doc: SimpleDrawDocument, private x: number, private y: number, private radius: number) {
-        super(doc)
-        this.shape = new Circle(this.x, this.y, this.radius)
+        super(doc, new Circle(x, y, radius))
     }
 }
 
@@ -35,8 +36,7 @@ export class CreateRectangleAction extends CreateAction {
     shape: Rectangle
 
     constructor(doc: SimpleDrawDocument, private x: number, private y: number, private width: number, private height: number) {
-        super(doc)
-        this.shape = new Rectangle(this.x, this.y, this.width, this.height)
+        super(doc, new Rectangle(x, y, width, height))
     }
 
 }
