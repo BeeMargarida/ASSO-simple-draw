@@ -1,5 +1,31 @@
-# SimpleDrawTS
+# SimpleDraw
 
-Typescript Browser-only SimpleDraw.
+## Goals
 
-ASSO / FEUP 2018/2019
+Develop a graphical editor to draw basic geometric objects, manipulate and persist them.
+
+* Develop using HTML-related technologies (SVG, Canvas)
+* All client-side (running in the browser)
+* Use Typescript instead of pure javascript
+* Zero-dependencies for the engine
+* Libraries for non-engine stuff only (sass, bootstrap)
+
+## Functionalities
+
+* SimpleDraw is based on the notion of documents
+* Documents are rendered either in SVG or HTMLCanvas
+* Multiple views of the same model in the screen
+* Two interaction modes: *point-n-click* and *REPLs*
+* Support persistence in multiple formats: TXT, XML, BIN
+* Extendible with different objects (triangles, arrows, etc)
+* Extendible with new tools (rotate, translate, grid, etc)
+* Support (un)limited Undo/Redo of all operations
+
+## Problems 
+
+#### SVG & Canvas
+To make it possible to have 2 methods of rendering each object - SVG and HTMLCanvas - it was used the **Strategy Pattern**. Each of this methods have a *draw* method, that draws each object in its specific way.
+
+#### Undo/Redo 
+It must be possible to undo/redo any action made in the editor. First of all, every change made in the document had to be translated to an action. This corresponds to the **Command Patter**.
+To apply the undo/redo, there are 2 stacks, the *doStack* and the *undoStack*. When an action is made (create shape, translate shape, etc), the action is added to the *doStack* and the *undoStack* is emptied, so that it doesn't create problems if a redo was made before. Each action has a *do* and *redo* method, the first when an action is first made or when the redo is of the *undoManager* is called. The *redo* method of the action is the reverse of said action and is called when the *undo* method of the *undoManager* is called. 
