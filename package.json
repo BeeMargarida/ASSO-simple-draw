@@ -17,7 +17,7 @@
     "scripts": {
         "build": "tsc",
         "browserify": "browserify build/script.js -o dist/bundle.js",
-        "browser": "npm run build; npm run browserify; opn index.html",
+        "browser": "npm run build; npm run browserify; google-chrome-stable index.html",
         "start": "npm run build; node build/main.js"
     }
 }

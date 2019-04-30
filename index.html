@@ -1,15 +1,68 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>SimpleDraw</title>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
 </head>
 
-<body>
+<body style="background-color: #dfdfdf">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border">
+        <a class="navbar-brand" href="#">SimpleDraw.js</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </nav>
+    <div class="row" style="height: 90vh">
+
+        <div class="col-9 border" style="background-color: white; vertical-align: top" id="draw_space">
+            <!-- <canvas id="canvas" width="200" height="200" style="border: 1px solid red; vertical-align: top"></canvas>
+            <svg id="svgcanvas" width="200" height="200" style="border: 1px solid blue; vertical-align: top"></svg> -->
+
+        </div>
+
+        <div class="col-3">
+            <div class="row m-1">
+                <button type="button" class="btn btn-secondary col-5" id="new_canvas">New canvas</button>
+            </div>
+            <div class="row m-1">
+                <button type="button" class="btn btn-secondary col-5" id="new_svg">New SVG</button>
+            </div>
+
+            <div>
+                <h3>Shapes</h3>
+                <button type="button" class="btn btn-secondary col-5" id="new_rect">Rectangle</button>
+                <button type="button" class="btn btn-secondary col-5" id="new_circ">Circle</button>
+            </div>
+
+            <form class="mr-3 mt-2">
+                <div class="form-group">
+                    <h3>Commands</h3>
+                    <input type="text" class="form-control" id="text" style="background-color: #3b3b3b; color: white">
+                </div>
+            </form>
+        </div>
+    </div>
+    <!--button id="zoom_canvas_in">Zoom In Canvas</button>
+    <button id="zoom_canvas_out">Zoom Out Canvas</button>
+    <button id="zoom_svg_in">Zoom In SVG</button>
+    <button id="zoom_svg_out">Zoom Out SVG</button>
     <canvas id="canvas" width="200" height="200" style="border: 1px solid red;"></canvas>
-    <svg id="svgcanvas" width="200" height="200" style="border: 1px solid blue;">
-    </svg>
-    
+    <svg id="svgcanvas" width="200" height="200" style="border: 1px solid blue;"></svg-->
+
     <script src="dist/bundle.js"></script>
 </body>
+
 </html>

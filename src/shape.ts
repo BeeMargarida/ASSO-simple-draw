@@ -9,8 +9,12 @@ export abstract class Shape {
 }
 
 export class Rectangle extends Shape {
+    centerX: number
+    centerY: number
     constructor(public x: number, public y: number, public width: number, public height: number) {
         super(x, y)
+        this.centerX = x + width/2
+        this.centerY = y + height/2
     }
 }
 
