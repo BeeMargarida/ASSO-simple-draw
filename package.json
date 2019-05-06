@@ -18,6 +18,7 @@
         "build": "tsc",
         "browserify": "browserify build/script.js -o dist/bundle.js",
         "browser": "npm run build; npm run browserify; google-chrome-stable index.html",
+        "firefox": "npm run build; npm run browserify; firefox index.html",
         "start": "npm run build; node build/main.js"
     }
 }

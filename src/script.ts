@@ -1,10 +1,12 @@
 import { SimpleDrawDocument } from './document'
+import { Interpreter } from './interpreter';
 import { CanvasRender, SVGRender } from './render';
 
 var canvasrenderers: CanvasRender[] = []
 var svgrenderers: SVGRender[] = []
 
 const sdd = new SimpleDrawDocument()
+const interpreter = new Interpreter(sdd);
 
 function addZoomListener(render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
     object.addEventListener('DOMMouseScroll', (evt: any) => {
@@ -30,6 +32,13 @@ function createCanvas(width: number) {
     var render = new CanvasRender(newCanvas)
     canvasrenderers.push(render)
     addZoomListener(render, newCanvas)
+}
+
+function drawAll(){
+    for (var render of svgrenderers)
+        sdd.draw(render)
+    for (var renderc of canvasrenderers)
+        sdd.draw(renderc)
 }
 
 document.getElementById('new_canvas').addEventListener('click', () => {
@@ -83,18 +92,58 @@ document.getElementById('new_svg').addEventListener('click', () => {
         sdd.draw(render)
 })
 
+
 document.getElementById('new_rect').addEventListener('click', () => {
     sdd.createRectangle(200, 200, 80, 80)
-    for (var render of svgrenderers)
-        sdd.draw(render)
-    for (var renderc of canvasrenderers)
-        sdd.draw(renderc)
+    drawAll();
 })
 
 document.getElementById('new_circ').addEventListener('click', () => {
     sdd.createCircle(200, 200, 30)
-    for (var render of svgrenderers)
-        sdd.draw(render)
-    for (var renderc of canvasrenderers)
-        sdd.draw(renderc)
+    drawAll();
 })
+
+let consoleOut = document.getElementById('output');
+let consoleIn : HTMLInputElement = document.getElementById('input') as HTMLInputElement;
+let consoleMinMaxBtn : HTMLInputElement = document.getElementById('minMaxBtn') as HTMLInputElement;
+let consoleClearBtn : HTMLInputElement = document.getElementById('clearBtn') as HTMLInputElement;
+
+consoleIn.addEventListener('keydown', (event) => {
+    if(event.keyCode == 13){
+        consoleOut.innerHTML += consoleIn.value;
+        let output = interpreter.execute(consoleIn.value);
+        if(output !== "")
+            consoleOut.innerHTML += '\n'+output;
+        consoleOut.innerHTML += '\n>> ';
+        consoleOut.scrollTop = consoleOut.scrollHeight;
+        consoleIn.value = "";
+        drawAll();
+    }
+});
+
+consoleClearBtn.addEventListener('click', () => {
+    consoleOut.innerHTML = ">> ";
+});
+
+consoleMinMaxBtn.addEventListener('click', () => {
+    let consoleStatus, consoleMinMaxBtnIcon, consoleClearBtnDisabled;
+    if(consoleMinMaxBtn.value === "open"){
+        consoleMinMaxBtn.value = "closed";
+        consoleStatus = "hidden";
+        consoleMinMaxBtnIcon = "fa-window-maximize";
+        consoleClearBtnDisabled = true;
+    }
+    else{
+      consoleMinMaxBtn.value = "open";
+      consoleStatus = "visible"; 
+      consoleMinMaxBtnIcon = "fa-window-minimize";
+      consoleClearBtnDisabled = false;
+    }
+    consoleOut.style.visibility = consoleStatus;
+    consoleIn.style.visibility = consoleStatus;
+    consoleClearBtn.disabled = consoleClearBtnDisabled;
+
+    let icon = consoleMinMaxBtn.children[0];
+    icon.classList.remove(icon.classList[1]);
+    icon.classList.add(consoleMinMaxBtnIcon);
+});

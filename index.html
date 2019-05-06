@@ -15,6 +15,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 </head>
 
 <body style="background-color: #dfdfdf">
@@ -47,12 +48,21 @@
                 <button type="button" class="btn btn-secondary col-5" id="new_circ">Circle</button>
             </div>
 
-            <form class="mr-3 mt-2">
-                <div class="form-group">
-                    <h3>Commands</h3>
-                    <input type="text" class="form-control" id="text" style="background-color: #3b3b3b; color: white">
+            <div class="form-group">
+                <div class="my-2 d-flex justify-content-between">
+                    <h3>Console</h3>
+                    <div class="d-fex justify-content-end mr-2">
+                        <button value="open" type="button" class="btn btn-primary btn-sm" id="minMaxBtn">
+                            <i class="fas fa-window-minimize"></i>
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" id="clearBtn">
+                            <i class="fas fa-ban"></i>
+                        </button>
+                    </div>
                 </div>
-            </form>
+                <textarea class="form-control" cols="50" readonly="true" id="output">>> </textarea>
+                <input type="text" class="form-control" id="input" style="background-color: #3b3b3b; color: white">
+            </div>
         </div>
     </div>
     <!--button id="zoom_canvas_in">Zoom In Canvas</button>
