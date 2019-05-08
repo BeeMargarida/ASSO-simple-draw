@@ -29,3 +29,7 @@ To make it possible to have 2 methods of rendering each object - SVG and HTMLCan
 #### Undo/Redo 
 It must be possible to undo/redo any action made in the editor. First of all, every change made in the document had to be translated to an action. This corresponds to the **Command Patter**.
 To apply the undo/redo, there are 2 stacks, the *doStack* and the *undoStack*. When an action is made (create shape, translate shape, etc), the action is added to the *doStack* and the *undoStack* is emptied, so that it doesn't create problems if a redo was made before. Each action has a *do* and *redo* method, the first when an action is first made or when the redo is of the *undoManager* is called. The *redo* method of the action is the reverse of said action and is called when the *undo* method of the *undoManager* is called. 
+
+#### Multiple views of the same model in the screen
+The system should allow the user to create new views in run time and still have all objects that were created before and all operations that have happened.
+To do this, the objects and operations are not stored on the views, but on the main class, which contains the project's information. By doing so, the views can then access the information on the main class and know where and how to position each object, regardless of the view's zoom, axis position, etc.
