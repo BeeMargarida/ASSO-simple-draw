@@ -6,6 +6,7 @@ import { UndoManager } from "./undo";
 export class SimpleDrawDocument {
   objects = new Array<Shape>()
   undoManager = new UndoManager();
+  selectedObjects = new Array<Shape>()
 
   undo() {
     this.undoManager.undo();
@@ -29,9 +30,6 @@ export class SimpleDrawDocument {
   }
 
   createRectangle(x: number, y: number, width: number, height: number): Shape {
-    console.log(x)
-    console.log(y)
-    console.log(height)
     return this.do(new CreateRectangleAction(this, x, y, width, height))
   }
 
