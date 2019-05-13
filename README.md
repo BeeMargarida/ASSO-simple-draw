@@ -32,4 +32,5 @@ To apply the undo/redo, there are 2 stacks, the *doStack* and the *undoStack*. W
 
 #### Multiple views of the same model in the screen
 The system should allow the user to create new views in run time and still have all objects that were created before and all operations that have happened.
-To do this, the objects and operations are not stored on the views, but on the main class, which contains the project's information. By doing so, the views can then access the information on the main class and know where and how to position each object, regardless of the view's zoom, axis position, etc.
+To do this, the objects and operations are not stored on the views, but on a class which contains the objects and operations' information. By doing so, the views can then access the information and know where and how to position each object, regardless of the view's zoom, axis position, etc.
+This approach consists of a **MVW** application, in which the Shape class is the model, the Render class is the view and whatever refers to both the Shape and the Render classes, because both work on the shapes.
