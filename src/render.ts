@@ -66,6 +66,7 @@ export class CanvasRender implements Render {
 
     draw(...objs: Array<Shape>): void {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        this.ctx.fillRect(this.centerX,this.centerY,1,1); // fill in the pixel at (10,10)
         for (const shape of objs) {
             if (shape instanceof Circle) {
                 this.ctx.beginPath()
@@ -93,5 +94,6 @@ export class CanvasRender implements Render {
         val = val > 0 ? 6/5 : 5/6
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
         this.zoom *= val;
+        console.log(this.zoom)
     }
 }

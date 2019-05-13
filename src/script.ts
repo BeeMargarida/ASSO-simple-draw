@@ -45,16 +45,16 @@ var lastY: number = 0
 var selected: Shape;
 function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
     e.preventDefault()
-    console.log(e)
+    var rect = e.target.getBoundingClientRect()
     var mx = e.clientX
     var my = e.clientY
     lastX = mx
     lastY = my
-    var rect = e.target.getBoundingClientRect()
     for (var x of sdd.objects)
         x.color = 'black'
     for (var s of sdd.objects) {
         if (s.checkIfHit(mx - rect.left, my - rect.top, render)) {
+            console.log("Shape: " + s.centerX + ", " + s.centerY)
             s.color = 'red'
             selected = s
             drawAll()
@@ -75,14 +75,14 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
     e.preventDefault()
     if(selected == null)
         return
-    var rect = e.target.getBoundingClientRect()
     var mx = e.clientX
     var my = e.clientY
-    var didMouseMove = (mx != lastX && my != lastY) ? true : false
+    var deltaX = mx-lastX
+    var deltaY = my-lastY
+    var didMouseMove = (deltaX != 0 && deltaY != 0) ? true : false
     if (didMouseMove) {
-        console.log("Selected: " + selected)
         // experimentar onMouseMove com o translate sem action para se conseguir ver o objeto a mover, mas não ser guardado como uma action para undo/redo
-        sdd.translate(selected, mx - rect.left - selected.x - (selected.centerX - selected.x), my - rect.top - selected.y - (selected.centerY - selected.y))
+        sdd.translate(selected, deltaX/render.zoom, deltaY/render.zoom)
         //selected.translate(mx-rect.left-selected.x-(selected.centerX-selected.x), my-rect.top-selected.y-(selected.centerY-selected.y))
         selected.color = 'black'
         selected = null
