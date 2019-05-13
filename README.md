@@ -12,20 +12,20 @@ Develop a graphical editor to draw basic geometric objects, manipulate and persi
 
 ## Functionalities
 
-* SimpleDraw is based on the notion of documents
-* Documents are rendered either in SVG or HTMLCanvas
-* Support persistence in multiple formats: TXT, XML, BIN
-* Extendible with different objects (triangles, arrows, etc)
-* Extendible with new tools (rotate, translate, grid, etc)
-* Support area selections
-* Support layers of objects
-* Multiple views of the same model in the screen
-* Viewport tools (translate, zoom)
-* Different view styles per viewport (wireframe, color)
-* Two interaction modes: *point-n-click* and *REPLs*
-* Support (un)limited Undo/Redo of all operations
+* [x] SimpleDraw is based on the notion of documents
+* [x] Documents are rendered either in SVG or HTMLCanvas
+* [ ] Support persistence in multiple formats: TXT, XML, BIN
+* [x] Extendible with different objects (triangles, arrows, etc)
+* [ ] Extendible with new tools (rotate, translate, grid, etc)
+* [ ] Support area selections
+* [ ] Support layers of objects
+* [x] Multiple views of the same model in the screen
+* [ ] Viewport tools (translate, zoom)
+* [ ] Different view styles per viewport (wireframe, color)
+* [x] Two interaction modes: *point-n-click* and *REPLs*
+* [x] Support (un)limited Undo/Redo of all operations
 
-* **OP MODE** Collaborate usign multiple browsers and no backend/server
+* [ ] **OP MODE** Collaborate usign multiple browsers and no backend/server
 
 ## Problems 
 
