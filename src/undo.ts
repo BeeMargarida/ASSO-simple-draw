@@ -4,6 +4,11 @@ export class UndoManager<S, A extends UndoableAction<S>> {
   doStack = new Array<A>();
   undoStack = new Array<A>();
 
+  clear() {
+    this.doStack.length = 0;
+    this.undoStack.length = 0;
+  }
+
   undo() {
     if (this.doStack.length > 0) {
       const a1 = this.doStack.pop();

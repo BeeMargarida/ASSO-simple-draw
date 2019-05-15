@@ -99,3 +99,6 @@ typings/
 
 /dist
 /build
+
+/api/node_modules
+/api/output/*

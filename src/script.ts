@@ -134,6 +134,8 @@ document.getElementById('redo').addEventListener('click', () => {
     drawAll()
 })
 
+// CONSOLE
+
 let consoleOut = document.getElementById('output');
 let consoleIn: HTMLInputElement = document.getElementById('input') as HTMLInputElement;
 let consoleMinMaxBtn: HTMLInputElement = document.getElementById('minMaxBtn') as HTMLInputElement;
@@ -178,3 +180,49 @@ consoleMinMaxBtn.addEventListener('click', () => {
     icon.classList.remove(icon.classList[1]);
     icon.classList.add(consoleMinMaxBtnIcon);
 });
+
+// FILE
+
+let newBtn: HTMLInputElement = document.getElementById('newBtn') as HTMLInputElement;
+let loadBtn: HTMLInputElement = document.getElementById('loadBtn') as HTMLInputElement;
+let saveBtn: HTMLInputElement = document.getElementById('saveBtn') as HTMLInputElement;
+let saveAsBtn: HTMLInputElement = document.getElementById('saveAsBtn') as HTMLInputElement;
+let modalSaveBtn: HTMLInputElement = document.getElementById('modalSaveBtn') as HTMLInputElement;
+let modalCancelBtn: HTMLInputElement = document.getElementById('modalCancelBtn') as HTMLInputElement;
+let loadFile: HTMLInputElement = document.getElementById('loadFile') as HTMLInputElement;
+let fileNameSelection: HTMLInputElement = document.getElementById('fileNameSelection') as HTMLInputElement;
+let extensionSelection: HTMLInputElement = document.getElementById('extensionSelection') as HTMLInputElement;
+let saveModal: any = document.getElementById('saveModal');
+
+newBtn.addEventListener('click', () => {
+    sdd.new();
+    drawAll();
+})
+
+loadBtn.addEventListener('click', () => {
+    loadFile.click();
+})
+
+loadFile.addEventListener('change', () => {
+    sdd.load(loadFile.files[0].name).then( () => {
+        modalCancelBtn.click();
+        drawAll();
+    }).catch((err) => window.alert(err));
+})
+
+saveBtn.addEventListener('click', () => {
+    if(sdd.hasSetWorkingFile())
+        sdd.saveWorkingFile();
+    else{
+        saveAsBtn.click();
+    }
+})
+
+modalSaveBtn.addEventListener('click', () => {
+    const fileName = fileNameSelection.value+"."+extensionSelection.value.toLowerCase();
+    sdd.save(fileName).then( () => {
+        modalCancelBtn.click();
+    }).catch((err) => {
+        window.alert(err)
+    });
+})
