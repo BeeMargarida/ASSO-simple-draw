@@ -46,6 +46,5 @@ export class TranslateAction implements Action<void> {
     undo() {
         this.shape.x = this.oldX
         this.shape.y = this.oldY
-       // this.shape.translate(-this.xd, -this.yd)
     }
 }

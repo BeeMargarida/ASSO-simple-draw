@@ -27,8 +27,7 @@ function addMouseClickListener(render: CanvasRender | SVGRender, object: HTMLCan
         e.preventDefault()
         var mx = e.clientX
         var my = e.clientY
-        var rect = e.target.getBoundingClientRect();
-        sdd.selectedObjects = [];
+        var rect = e.target.getBoundingClientRect()
         for (var s of sdd.objects) {
             if (s.checkIfHit(mx - rect.left, my - rect.top, render)) {
                 s.color = 'red'
@@ -39,6 +38,60 @@ function addMouseClickListener(render: CanvasRender | SVGRender, object: HTMLCan
             }
         }
     })
+}
+
+var lastX: number = 0
+var lastY: number = 0
+var selected: Shape;
+function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
+    e.preventDefault()
+    var rect = e.target.getBoundingClientRect()
+    var mx = e.clientX
+    var my = e.clientY
+    lastX = mx
+    lastY = my
+    for (var x of sdd.objects)
+        x.color = 'black'
+    for (var s of sdd.objects) {
+        if (s.checkIfHit(mx - rect.left, my - rect.top, render)) {
+            console.log("Shape: " + s.centerX + ", " + s.centerY)
+            s.color = 'red'
+            selected = s
+            drawAll()
+            break
+        } else {
+            s.color = 'black'
+            selected = null
+            drawAll()
+        }
+    }
+}
+
+function addMouseDownListener(render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
+    object.addEventListener('mousedown', (e: any) => onMouseDown(e, render, object))
+}
+
+function onMouseUp(e: any, render: CanvasRender | SVGRender) {
+    e.preventDefault()
+    if(selected == null)
+        return
+    var mx = e.clientX
+    var my = e.clientY
+    var deltaX = mx-lastX
+    var deltaY = my-lastY
+    var didMouseMove = (deltaX != 0 && deltaY != 0) ? true : false
+    if (didMouseMove) {
+        // experimentar onMouseMove com o translate sem action para se conseguir ver o objeto a mover, mas não ser guardado como uma action para undo/redo
+        sdd.translate(selected, deltaX/render.zoom, deltaY/render.zoom)
+        //selected.translate(mx-rect.left-selected.x-(selected.centerX-selected.x), my-rect.top-selected.y-(selected.centerY-selected.y))
+        selected.color = 'black'
+        selected = null
+        drawAll()
+    }
+}
+
+function addMouseUpListener(render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
+    object.addEventListener('mouseup', (e: any) => onMouseUp(e, render))
 }
 
 function createCanvas(width: number) {
@@ -52,7 +105,8 @@ function createCanvas(width: number) {
     var render = new CanvasRender(newCanvas)
     canvasrenderers.push(render)
     addZoomListener(render, newCanvas)
-    addMouseClickListener(render, newCanvas)
+    addMouseDownListener(render, newCanvas)
+    addMouseUpListener(render, newCanvas)
     drawAll()
 }
 
@@ -93,7 +147,8 @@ function createSVG(width: number) {
     var render = new SVGRender(newSvg)
     svgrenderers.push(render)
     addZoomListener(render, newSvg)
-    addMouseClickListener(render, newSvg)
+    addMouseDownListener(render, newSvg)
+    addMouseUpListener(render, newSvg)
     drawAll()
 }
 
