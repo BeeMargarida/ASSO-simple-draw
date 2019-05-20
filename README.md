@@ -14,7 +14,7 @@ Develop a graphical editor to draw basic geometric objects, manipulate and persi
 
 * [x] SimpleDraw is based on the notion of documents
 * [x] Documents are rendered either in SVG or HTMLCanvas
-* [ ] Support persistence in multiple formats: TXT, XML, BIN
+* [x] Support persistence in multiple formats: TXT, XML, BIN
 * [x] Extendible with different objects (triangles, arrows, etc)
 * [ ] Extendible with new tools (rotate, translate, grid, etc)
 * [ ] Support area selections
