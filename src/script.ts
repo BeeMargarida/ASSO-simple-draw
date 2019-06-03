@@ -28,7 +28,7 @@ function addMouseClickListener(render: CanvasRender | SVGRender, object: HTMLCan
         var mx = e.clientX
         var my = e.clientY
         var rect = e.target.getBoundingClientRect()
-        for (var s of sdd.objects) {
+        for (var s of sdd.layers[sdd.selectedLayer]) {
             if (s.checkIfHit(mx - rect.left, my - rect.top, render)) {
                 s.color = 'red'
                 drawAll()
@@ -50,9 +50,9 @@ function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanva
     var my = e.clientY
     lastX = mx
     lastY = my
-    for (var x of sdd.objects)
+    for (var x of sdd.layers[sdd.selectedLayer])
         x.color = 'black'
-    for (var s of sdd.objects) {
+    for (var s of sdd.layers[sdd.selectedLayer]) {
         if (s.checkIfHit(mx - rect.left, my - rect.top, render)) {
             console.log("Shape: " + s.centerX + ", " + s.centerY)
             s.color = 'red'
@@ -95,6 +95,7 @@ function addMouseUpListener(render: CanvasRender | SVGRender, object: HTMLCanvas
 }
 
 function createCanvas(width: number) {
+    sdd.new()
     var drawSpace = document.getElementById('draw_space')
     var newCanvas = document.createElement('canvas')
     newCanvas.width = width
@@ -191,9 +192,10 @@ document.getElementById('redo').addEventListener('click', () => {
 
 
 // LAYER
-document.getElementById('new_layer').addEventListener('click', () => {
-    sdd.addLayer()
-})
+document.getElementById('new_layer').addEventListener('click', () => sdd.addLayer())
+document.getElementById('delete_layer').addEventListener('click', () => { sdd.deleteLayer(); drawAll()})
+document.getElementById('previous_layer').addEventListener('click', (evt) => { sdd.previousLayer(evt); drawAll()})
+document.getElementById('next_layer').addEventListener('click', (evt) => { sdd.nextLayer(evt); drawAll()})
 
 
 // CONSOLE
@@ -269,6 +271,7 @@ loadFile.addEventListener('change', () => {
     sdd.load(loadFile.files[0].name).then( () => {
         modalCancelBtn.click();
         drawAll();
+        sdd.updateDisabledButtons()
     }).catch((err) => window.alert(err));
 })
 

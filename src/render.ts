@@ -65,6 +65,7 @@ export class CanvasRender implements Render {
     }
 
     draw(...objs: Array<Shape>): void {
+        //console.log("DRAW RENDER CANVAS")
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
         this.ctx.fillRect(this.centerX,this.centerY,1,1); // fill in the pixel at (10,10)
         for (const shape of objs) {

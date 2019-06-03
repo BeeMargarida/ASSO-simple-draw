@@ -15,7 +15,11 @@ abstract class CreateShapeAction<S extends Shape> implements Action<S> {
     }
 
     undo() {
-        this.doc.objects = this.doc.objects.filter(o => o !== this.shape)
+        var layers = new Array<Array<Shape>>()
+        for(var layer of this.doc.layers){
+            layers.push(layer.filter(o => o !== this.shape))
+        }
+        this.doc.layers = layers
     }
 }
 
