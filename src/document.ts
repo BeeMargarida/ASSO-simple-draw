@@ -8,7 +8,9 @@ import axios from 'axios';
 export class SimpleDrawDocument {
   static API_HOST = 'http://localhost:3000';
 
-  objects = new Array<Shape>()
+  //objects = new Array<Shape>()
+  layers = new Array<Array<Shape>>()
+  selectedLayer = 0;
   undoManager = new UndoManager();
   selectedObjects = new Array<Shape>()
   workingFilePath: string = null;
@@ -22,11 +24,15 @@ export class SimpleDrawDocument {
   }
 
   draw(render: Render): void {
-    render.draw(...this.objects)
+    this.layers.forEach(objects => {
+      render.draw(...objects)
+    });
+    //render.draw(...this.objects)
   }
 
   add(r: Shape): void {
-    this.objects.push(r)
+    //this.objects.push(r)
+    this.layers[this.selectedLayer].push(r)
   }
 
   do<T>(a: Action<T>): T {
@@ -47,10 +53,16 @@ export class SimpleDrawDocument {
   }
 
   new(): void{
-    this.objects.length = 0;
+    //this.objects.length = 0;
+    this.layers.length = 1
+    this.layers[0] = new Array<Shape>()
     this.undoManager.clear();
     this.selectedObjects.length = 0;
     this.workingFilePath = null;
+  }
+
+  addLayer(): void {
+    //TODO: Create layer
   }
 
   hasSetWorkingFile(): boolean{
@@ -65,8 +77,10 @@ export class SimpleDrawDocument {
     const fileManager = FileManagerFactory.getFileManager(fileName);
 
     let data;
-    if(fileManager != null)
-      data = fileManager.save(this.objects, fileName);
+    if(fileManager != null){
+      //data = fileManager.save(this.objects, fileName);
+      data = fileManager.save(this.layers[0], fileName) // TODO: change to save all layers!
+    }
     else
       throw 'Unsupported file extension';
 
@@ -89,7 +103,8 @@ export class SimpleDrawDocument {
     })
 
     const fileManager = FileManagerFactory.getFileManager(fileName);
-    this.objects = fileManager.load(res.data.content);
+    //this.objects = fileManager.load(res.data.content);
+    //TODO: Load objects of all layers!
     this.workingFilePath = fileName;
   }
 }

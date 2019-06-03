@@ -189,6 +189,13 @@ document.getElementById('redo').addEventListener('click', () => {
     drawAll()
 })
 
+
+// LAYER
+document.getElementById('new_layer').addEventListener('click', () => {
+    sdd.addLayer()
+})
+
+
 // CONSOLE
 
 let consoleOut = document.getElementById('output');
