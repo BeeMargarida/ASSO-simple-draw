@@ -72,7 +72,11 @@ export class SimpleDrawDocument {
   }
 
   deleteLayer(): void {
-    this.layers.splice(this.selectedLayer, 1)
+    if(this.layers.length != 1){
+      this.layers.splice(this.selectedLayer, 1)
+      this.selectedLayer = this.selectedLayer == 0 ? 0 : this.selectedLayer - 1
+      this.updateDisabledButtons()
+    }
   }
 
   updateDisabledButtons(): void {
