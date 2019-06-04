@@ -18,7 +18,7 @@ Develop a graphical editor to draw basic geometric objects, manipulate and persi
 * [x] Extendible with different objects (triangles, arrows, etc)
 * [ ] Extendible with new tools (rotate, translate shapes)
 * [ ] Support area selections
-* [ ] Support layers of objects
+* [x] Support layers of objects
 * [x] Multiple views of the same model in the screen
 * [ ] Viewport tools (translate, zoom on the viewport)
 * [ ] Different view styles per viewport (wireframe, color)
