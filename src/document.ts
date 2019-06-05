@@ -1,4 +1,4 @@
-import { Shape } from './shape'
+import { Shape, AreaSelected } from './shape'
 import { Action, CreateCircleAction, CreateRectangleAction, TranslateAction } from './actions'
 import { Render } from './render';
 import { FileManager, FileManagerFactory } from './file-manager';
@@ -11,10 +11,10 @@ export class SimpleDrawDocument {
 
   //objects = new Array<Shape>()
   layers = new Array<Array<Shape>>()
-  selectedLayer = 0;
-  undoManager = new UndoManager();
-  selectedObjects = new Array<Shape>()
-  workingFilePath: string = null;
+  selectedLayer = 0
+  undoManager = new UndoManager()
+  selectedArea: Shape = null
+  workingFilePath: string = null
 
   undo() {
     this.undoManager.undo();
@@ -26,12 +26,13 @@ export class SimpleDrawDocument {
 
   draw(render: Render): void {
     var objs = new Array<Shape>()
-    console.log(this.layers)
     this.layers.forEach((objects, idx) => {
       if(objects.length != 0 || idx == this.selectedLayer)
         objs.push(...objects)
     });
     objs.push(...this.layers[this.selectedLayer])
+
+    if (this.selectedArea !== null) objs.push(this.selectedArea)
 
     render.draw(...objs)
   }
@@ -62,7 +63,7 @@ export class SimpleDrawDocument {
     this.selectedLayer = 0
     this.layers.push(new Array<Shape>())
     this.undoManager.clear();
-    this.selectedObjects.length = 0;
+    this.selectedArea = null;
     this.workingFilePath = null;
   }
 

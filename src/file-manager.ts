@@ -106,7 +106,6 @@ export class TXTFileManager implements FileManager {
         let model: Array<Array<Shape>> = [];
 
         const lines = data.split('\n');
-        console.log(lines)
         if (lines[0] != '[simpledrawdocument]')
             throw 'Invalid file';
 
@@ -116,7 +115,6 @@ export class TXTFileManager implements FileManager {
                 continue;
 
             let shape = null;
-            console.log(lines[i])
             if (lines[i] == "[layer]") {
                 if (i != 1) {
                     model.push(layers)

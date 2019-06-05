@@ -1,4 +1,4 @@
-import { Shape, Circle, Rectangle } from "./shape"
+import { Shape, Circle, Rectangle, AreaSelected } from "./shape"
 import { getCoordWithZoom } from "./utils";
 
 export interface Render {
@@ -24,9 +24,9 @@ export class SVGRender implements Render {
         while (this.svg.firstChild != null)
             this.svg.firstChild.remove()
         for (const shape of objs) {
-            if (shape instanceof Rectangle) {
+            if (shape instanceof Rectangle || shape instanceof AreaSelected) {
                 const e = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-                e.setAttribute('style', 'stroke: '+shape.color+'; fill: none')
+                e.setAttribute('style', 'stroke: ' + shape.color + '; fill: none')
                 e.setAttribute('x', (getCoordWithZoom(shape.x, this.centerX, this.zoom)).toString())
                 e.setAttribute('y', (getCoordWithZoom(shape.y, this.centerY, this.zoom)).toString())
                 e.setAttribute('width', (shape.width * this.zoom).toString())
@@ -37,14 +37,14 @@ export class SVGRender implements Render {
                 circle.setAttributeNS(null, 'cx', (getCoordWithZoom(shape.x, this.centerX, this.zoom)).toString());
                 circle.setAttributeNS(null, 'cy', (getCoordWithZoom(shape.y, this.centerY, this.zoom)).toString());
                 circle.setAttributeNS(null, 'r', (shape.radius * this.zoom).toString());
-                circle.setAttributeNS(null, 'style', 'fill: none; stroke: '+shape.color+'; stroke-width: 1px;');
+                circle.setAttributeNS(null, 'style', 'fill: none; stroke: ' + shape.color + '; stroke-width: 1px;');
                 this.svg.appendChild(circle);
             }
         }
     }
 
     applyZoom(val: number): void {
-        val = val > 0 ? 6/5 : 5/6
+        val = val > 0 ? 6 / 5 : 5 / 6
         this.zoom *= val
     }
 }
@@ -65,9 +65,8 @@ export class CanvasRender implements Render {
     }
 
     draw(...objs: Array<Shape>): void {
-        //console.log("DRAW RENDER CANVAS")
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-        this.ctx.fillRect(this.centerX,this.centerY,1,1); // fill in the pixel at (10,10)
+        this.ctx.fillRect(this.centerX, this.centerY, 1, 1); // fill in the pixel at (10,10)
         for (const shape of objs) {
             if (shape instanceof Circle) {
                 this.ctx.beginPath()
@@ -79,7 +78,7 @@ export class CanvasRender implements Render {
                     shape.radius * this.zoom,
                     0, 0, 2 * Math.PI)
                 this.ctx.stroke()
-            } else if (shape instanceof Rectangle) {
+            } else if (shape instanceof Rectangle || shape instanceof AreaSelected) {
                 this.ctx.strokeStyle = shape.color
                 this.ctx.strokeRect(
                     getCoordWithZoom(shape.x, this.centerX, this.zoom),
@@ -92,9 +91,9 @@ export class CanvasRender implements Render {
     }
 
     applyZoom(val: number): void {
-        val = val > 0 ? 6/5 : 5/6
+        val = val > 0 ? 6 / 5 : 5 / 6
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
         this.zoom *= val;
-        console.log(this.zoom)
+        //console.log(this.zoom)
     }
 }

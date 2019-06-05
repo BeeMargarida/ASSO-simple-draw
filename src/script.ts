@@ -1,7 +1,7 @@
 import { SimpleDrawDocument } from './document'
 import { Interpreter } from './interpreter';
 import { CanvasRender, SVGRender } from './render';
-import { Shape } from 'shape';
+import { Shape, AreaSelected } from './shape';
 
 var canvasrenderers: CanvasRender[] = []
 var svgrenderers: SVGRender[] = []
@@ -42,6 +42,7 @@ function addMouseClickListener(render: CanvasRender | SVGRender, object: HTMLCan
 
 var lastX: number = 0
 var lastY: number = 0
+var areaSelected: boolean = false
 var selected: Shape;
 function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
     e.preventDefault()
@@ -50,11 +51,21 @@ function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanva
     var my = e.clientY
     lastX = mx
     lastY = my
+
+    // Check if there is an selected area and if it was clicked
+    if(areaSelected) {
+        if(selected.checkIfHit(mx - rect.left, my - rect.top, render)){
+            return
+        }
+        selected = null
+        sdd.selectedArea = null
+        areaSelected = false
+    }
+
     for (var x of sdd.layers[sdd.selectedLayer])
         x.color = 'black'
     for (var s of sdd.layers[sdd.selectedLayer]) {
         if (s.checkIfHit(mx - rect.left, my - rect.top, render)) {
-            console.log("Shape: " + s.centerX + ", " + s.centerY)
             s.color = 'red'
             selected = s
             drawAll()
@@ -73,19 +84,51 @@ function addMouseDownListener(render: CanvasRender | SVGRender, object: HTMLCanv
 
 function onMouseUp(e: any, render: CanvasRender | SVGRender) {
     e.preventDefault()
-    if(selected == null)
-        return
+    var rect = e.target.getBoundingClientRect()
+
     var mx = e.clientX
     var my = e.clientY
-    var deltaX = mx-lastX
-    var deltaY = my-lastY
+    var deltaX = mx - lastX
+    var deltaY = my - lastY
+    var upperLeftX = ((lastX - rect.left)+ deltaX/2) - Math.abs(deltaX)/2
+    var upperLeftY = ((lastY - rect.top) + deltaY/2) - Math.abs(deltaY)/2
+
     var didMouseMove = (deltaX != 0 && deltaY != 0) ? true : false
-    if (didMouseMove) {
+    
+    if(selected == null) {
+        console.log("ULX: " + upperLeftX + " UPY: " + upperLeftY)
+        if (didMouseMove) {
+            // Area Selection
+            var selectedShapes: Array<Shape> = new Array<Shape>()
+            // Get all selected shapes
+            for (var x of sdd.layers[sdd.selectedLayer]){
+                if (x.checkIfBetween(upperLeftX, upperLeftY, Math.abs(deltaX), Math.abs(deltaY), render)) {
+                    console.log(x)
+                    x.color = 'red'
+                    selectedShapes.push(x)
+                } else {
+                    x.color = 'black'
+                }
+            }
+            
+            if(selectedShapes.length != 0) {
+                areaSelected = true
+                selected = new AreaSelected(upperLeftX, upperLeftY, Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
+                sdd.selectedArea = selected
+                drawAll()
+                return
+            }
+            areaSelected = false
+        }
+    }
+    else if (didMouseMove) {
         // experimentar onMouseMove com o translate sem action para se conseguir ver o objeto a mover, mas não ser guardado como uma action para undo/redo
-        sdd.translate(selected, deltaX/render.zoom, deltaY/render.zoom)
+        sdd.translate(selected, deltaX / render.zoom, deltaY / render.zoom)
         //selected.translate(mx-rect.left-selected.x-(selected.centerX-selected.x), my-rect.top-selected.y-(selected.centerY-selected.y))
-        selected.color = 'black'
-        selected = null
+        
+        //selected.color = 'black'
+        //selected = null
+
         drawAll()
     }
 }
@@ -193,9 +236,9 @@ document.getElementById('redo').addEventListener('click', () => {
 
 // LAYER
 document.getElementById('new_layer').addEventListener('click', () => sdd.addLayer())
-document.getElementById('delete_layer').addEventListener('click', () => { sdd.deleteLayer(); drawAll()})
-document.getElementById('previous_layer').addEventListener('click', (evt) => { sdd.previousLayer(evt); drawAll()})
-document.getElementById('next_layer').addEventListener('click', (evt) => { sdd.nextLayer(evt); drawAll()})
+document.getElementById('delete_layer').addEventListener('click', () => { sdd.deleteLayer(); drawAll() })
+document.getElementById('previous_layer').addEventListener('click', (evt) => { sdd.previousLayer(evt); drawAll() })
+document.getElementById('next_layer').addEventListener('click', (evt) => { sdd.nextLayer(evt); drawAll() })
 
 
 // CONSOLE
@@ -268,7 +311,7 @@ loadBtn.addEventListener('click', () => {
 })
 
 loadFile.addEventListener('change', () => {
-    sdd.load(loadFile.files[0].name).then( () => {
+    sdd.load(loadFile.files[0].name).then(() => {
         modalCancelBtn.click();
         drawAll();
         sdd.updateDisabledButtons()
@@ -276,16 +319,16 @@ loadFile.addEventListener('change', () => {
 })
 
 saveBtn.addEventListener('click', () => {
-    if(sdd.hasSetWorkingFile())
+    if (sdd.hasSetWorkingFile())
         sdd.saveWorkingFile();
-    else{
+    else {
         saveAsBtn.click();
     }
 })
 
 modalSaveBtn.addEventListener('click', () => {
-    const fileName = fileNameSelection.value+"."+extensionSelection.value.toLowerCase();
-    sdd.save(fileName).then( () => {
+    const fileName = fileNameSelection.value + "." + extensionSelection.value.toLowerCase();
+    sdd.save(fileName).then(() => {
         modalCancelBtn.click();
     }).catch((err) => {
         window.alert(err)
