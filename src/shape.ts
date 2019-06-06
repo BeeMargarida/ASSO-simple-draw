@@ -114,17 +114,6 @@ export class AreaSelected extends Shape {
         return false
     }
 
-    translate(xd: number, yd: number): void {
-        for(var shape of this.selectedShapes) {
-            shape.x += xd
-            shape.y += yd
-            shape.updateCenter()
-        }
-        this.x += xd
-        this.y += yd
-        this.updateCenter()
-    }
-
     checkIfBetween(startX: number, startY: number, width: number, height: number, render: CanvasRender | SVGRender) : boolean {
         var sx = getCoordWithZoom(this.x, render.centerX, render.zoom)
         var sy = getCoordWithZoom(this.y, render.centerY, render.zoom)

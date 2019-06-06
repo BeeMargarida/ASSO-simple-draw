@@ -1,4 +1,4 @@
-import { Shape, Circle, Rectangle } from './shape'
+import { Shape, Circle, Rectangle, AreaSelected } from './shape'
 import { SimpleDrawDocument } from './document'
 
 export interface Action<T> {
@@ -42,12 +42,22 @@ export class TranslateAction implements Action<void> {
     constructor(private doc: SimpleDrawDocument, public shape: Shape, private xd: number, private yd: number) { }
 
     do(): void {
+        if(this.shape instanceof AreaSelected){
+            for(const shape of this.shape.selectedShapes){
+                shape.translate(this.xd, this.yd)
+            }
+        }
         this.oldX = this.shape.x
         this.oldY = this.shape.y
         this.shape.translate(this.xd, this.yd)
     }
 
     undo() {
+        if(this.shape instanceof AreaSelected){
+            for(const shape of this.shape.selectedShapes){
+                shape.translate(-this.xd, -this.yd)
+            }
+        }
         this.shape.x = this.oldX
         this.shape.y = this.oldY
     }
