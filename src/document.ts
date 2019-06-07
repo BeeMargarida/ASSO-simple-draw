@@ -5,6 +5,7 @@ import { FileManager, FileManagerFactory } from './file-manager';
 import { UndoManager } from "./undo";
 import axios from 'axios';
 import { deflateRaw } from 'zlib';
+import { Communicator } from './communication';
 
 export class SimpleDrawDocument {
   static API_HOST = 'http://localhost:3000';
@@ -15,6 +16,11 @@ export class SimpleDrawDocument {
   undoManager = new UndoManager()
   selectedArea: Shape = null
   workingFilePath: string = null
+  communicator: Communicator = new Communicator()
+
+  constructor() {
+    this.communicator.start(this)
+  }
 
   undo() {
     this.undoManager.undo();
@@ -27,7 +33,7 @@ export class SimpleDrawDocument {
   draw(render: Render): void {
     var objs = new Array<Shape>()
     this.layers.forEach((objects, idx) => {
-      if(objects.length != 0 || idx == this.selectedLayer)
+      if (objects.length != 0 || idx == this.selectedLayer)
         objs.push(...objects)
     });
     objs.push(...this.layers[this.selectedLayer])
@@ -42,20 +48,30 @@ export class SimpleDrawDocument {
   }
 
   do<T>(a: Action<T>): T {
+    console.log(a)
+    console.log(this.layers[0].length)
     this.undoManager.onActionDone(a);
     return a.do();
   }
 
   createRectangle(x: number, y: number, width: number, height: number): Shape {
-    return this.do(new CreateRectangleAction(this, x, y, width, height))
+    const action = new CreateRectangleAction(this, x, y, width, height)
+    console.log(action)
+    this.communicator.send(action.serialize())
+    return this.do(action)
   }
 
   createCircle(x: number, y: number, radius: number): Shape {
-    return this.do(new CreateCircleAction(this, x, y, radius))
+    const action = new CreateCircleAction(this, x, y, radius)
+    this.communicator.send(action.serialize())
+    return this.do(action)
   }
 
   translate(s: Shape, xd: number, yd: number): void {
-    return this.do(new TranslateAction(this, s, xd, yd))
+    const action = new TranslateAction(this, s, xd, yd)
+    console.log(action)
+    this.communicator.send(action.serialize())
+    return this.do(action)
   }
 
   new(): void {
@@ -73,7 +89,7 @@ export class SimpleDrawDocument {
   }
 
   deleteLayer(): void {
-    if(this.layers.length != 1){
+    if (this.layers.length != 1) {
       this.layers.splice(this.selectedLayer, 1)
       this.selectedLayer = this.selectedLayer == 0 ? 0 : this.selectedLayer - 1
       this.updateDisabledButtons()
@@ -81,13 +97,13 @@ export class SimpleDrawDocument {
   }
 
   updateDisabledButtons(): void {
-    if(this.selectedLayer >= this.layers.length - 1){
+    if (this.selectedLayer >= this.layers.length - 1) {
       document.getElementById("next_layer").classList.add("disabled")
     }
     else {
       document.getElementById("next_layer").classList.remove("disabled")
     }
-    if(this.selectedLayer == 0){
+    if (this.selectedLayer == 0) {
       document.getElementById("previous_layer").classList.add("disabled")
     }
     else {
@@ -146,5 +162,22 @@ export class SimpleDrawDocument {
     const fileManager = FileManagerFactory.getFileManager(fileName);
     this.layers = fileManager.load(res.data.content);
     this.workingFilePath = fileName;
+  }
+
+  receiveAction(action: string) {
+    const a = JSON.parse(action)
+    const type = a.type
+    const shape = a.shape
+    const coords = a.coords.split(' ')
+    console.log(a)
+    if(type === 'create'){
+      if(shape === 'circle'){
+        this.do(new CreateCircleAction(this, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10)))
+      } else if (shape === 'rectangle'){
+        this.do(new CreateRectangleAction(this, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10), parseInt(coords[3], 10)))
+      }
+    } else if (type === 'translate'){
+      console.log('translate')
+    }
   }
 }

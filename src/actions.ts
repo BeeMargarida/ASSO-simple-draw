@@ -4,6 +4,7 @@ import { SimpleDrawDocument } from './document'
 export interface Action<T> {
     do(): T
     undo(): void
+    serialize(): string
 }
 
 abstract class CreateShapeAction<S extends Shape> implements Action<S> {
@@ -21,17 +22,37 @@ abstract class CreateShapeAction<S extends Shape> implements Action<S> {
         }
         this.doc.layers = layers
     }
+
+    abstract serialize() : string
 }
 
 export class CreateCircleAction extends CreateShapeAction<Circle> {
     constructor(doc: SimpleDrawDocument, private x: number, private y: number, private radius: number) {
         super(doc, new Circle(x, y, radius))
     }
+
+    serialize() : string {
+        let action = {
+            type: 'create',
+            shape: 'circle',
+            coords: ''+this.x+' '+this.y+' '+this.radius
+        }
+        return JSON.stringify(action)
+    }
 }
 
 export class CreateRectangleAction extends CreateShapeAction<Rectangle> {
     constructor(doc: SimpleDrawDocument, private x: number, private y: number, private width: number, private height: number) {
         super(doc, new Rectangle(x, y, width, height))
+    }
+
+    serialize() : string {
+        let action = {
+            type: 'create',
+            shape: 'rectangle',
+            coords: ''+this.x+' '+this.y+' '+this.width+' '+this.height
+        }
+        return JSON.stringify(action)
     }
 }
 
@@ -60,5 +81,14 @@ export class TranslateAction implements Action<void> {
         }
         this.shape.x = this.oldX
         this.shape.y = this.oldY
+    }
+
+    serialize() : string {
+        let action = {
+            type: 'translate',
+            shape: this.shape,
+            coords: ''+this.xd+' '+this.yd
+        }
+        return JSON.stringify(action)
     }
 }
