@@ -42,10 +42,23 @@ function addMouseClickListener(render: CanvasRender | SVGRender, object: HTMLCan
 
 var lastX: number = 0
 var lastY: number = 0
+var lastRightX: number = 0
+var lastRightY: number = 0
 var areaSelected: boolean = false
 var selected: Shape;
 function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
     e.preventDefault()
+    switch (e.which) {
+        case 1:
+            onMouseDownLeft(e, render, object)
+            break;
+        case 3:
+            onMouseDownRight(e, render, object)
+            break;
+    }
+}
+
+function onMouseDownLeft(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
     var rect = e.target.getBoundingClientRect()
     var mx = e.clientX
     var my = e.clientY
@@ -53,8 +66,8 @@ function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanva
     lastY = my
 
     // Check if there is an selected area and if it was clicked
-    if(areaSelected) {
-        if(selected.checkIfHit(mx - rect.left, my - rect.top, render)){
+    if (areaSelected) {
+        if (selected.checkIfHit(mx - rect.left, my - rect.top, render)) {
             return
         }
         selected = null
@@ -78,30 +91,49 @@ function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanva
     }
 }
 
+function onMouseDownRight(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
+    var rect = e.target.getBoundingClientRect()
+    var mx = e.clientX
+    var my = e.clientY
+    lastRightX = mx
+    lastRightY = my
+}
+
 function addMouseDownListener(render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
     object.addEventListener('mousedown', (e: any) => onMouseDown(e, render, object))
 }
 
 function onMouseUp(e: any, render: CanvasRender | SVGRender) {
     e.preventDefault()
+    switch (e.which) {
+        case 1:
+            onMouseUpLeft(e, render)
+            break;
+        case 3:
+            onMouseUpRight(e, render)
+            break;
+    }
+
+}
+
+function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
     var rect = e.target.getBoundingClientRect()
 
     var mx = e.clientX
     var my = e.clientY
     var deltaX = mx - lastX
     var deltaY = my - lastY
-    var upperLeftX = ((lastX - rect.left)+ deltaX/2) - Math.abs(deltaX)/2
-    var upperLeftY = ((lastY - rect.top) + deltaY/2) - Math.abs(deltaY)/2
+    var upperLeftX = ((lastX - rect.left) + deltaX / 2) - Math.abs(deltaX) / 2
+    var upperLeftY = ((lastY - rect.top) + deltaY / 2) - Math.abs(deltaY) / 2
 
     var didMouseMove = (deltaX != 0 && deltaY != 0) ? true : false
-    
-    if(selected == null) {
-        console.log("ULX: " + upperLeftX + " UPY: " + upperLeftY)
+
+    if (selected == null) {
         if (didMouseMove) {
             // Area Selection
             var selectedShapes: Array<Shape> = new Array<Shape>()
             // Get all selected shapes
-            for (var x of sdd.layers[sdd.selectedLayer]){
+            for (var x of sdd.layers[sdd.selectedLayer]) {
                 if (x.checkIfBetween(upperLeftX, upperLeftY, Math.abs(deltaX), Math.abs(deltaY), render)) {
                     console.log(x)
                     x.color = 'red'
@@ -110,8 +142,8 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
                     x.color = 'black'
                 }
             }
-            
-            if(selectedShapes.length != 0) {
+
+            if (selectedShapes.length != 0) {
                 areaSelected = true
                 selected = new AreaSelected(upperLeftX, upperLeftY, Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
                 sdd.selectedArea = selected
@@ -125,12 +157,20 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
         // experimentar onMouseMove com o translate sem action para se conseguir ver o objeto a mover, mas não ser guardado como uma action para undo/redo
         sdd.translate(selected, deltaX / render.zoom, deltaY / render.zoom)
         //selected.translate(mx-rect.left-selected.x-(selected.centerX-selected.x), my-rect.top-selected.y-(selected.centerY-selected.y))
-        
-        //selected.color = 'black'
-        //selected = null
-
         drawAll()
     }
+}
+
+function onMouseUpRight(e: any, render: CanvasRender | SVGRender) {
+    var rect = e.target.getBoundingClientRect()
+
+    var mx = e.clientX
+    var my = e.clientY
+    var deltaX = mx - lastX
+    var deltaY = my - lastY
+
+    //TODO: translate scene by deltaX
+    
 }
 
 function addMouseUpListener(render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
