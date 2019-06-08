@@ -17,6 +17,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use("/api/files", fileRoutes);
+app.use('/api/collab', startSocket)
 
 app.use(function (req, res, next) {
   let err = new Error("Not Found");
@@ -27,26 +28,44 @@ app.use(function (req, res, next) {
 app.use(errorHandler);
 
 // HTTP server
-var server = http.createServer(app);
-server.listen(3000, function () {
-  console.log('HTTP server listening on port ' + 3000);
+var connectionServer = http.createServer(app);
+connectionServer.listen(3000, function () {
+  console.log('HTTP server listening on port ' + 3000)
 });
 
-var wss = new WebSocket.Server({ server: server })
-wss.on('connection', function connection(ws) {
-  console.log('connected')
-  ws.send('Connected')
+function startSocket() {
+  class User {
+    constructor(id, ws) {
+      this.id = id
+      this.ws = ws
+    }
+  }
 
-  ws.on('message', data => {
-    console.log('Message incoming')
-    ws.send('hello')
-    //ws.send('{"type":"translate","shape":[0],"coords":"-100 -100"}')
+  var connectionSocket = new WebSocket.Server({ server: connectionServer })
+  var connectedUsers = new Array()
+  var lastUserId = 0
+  connectionSocket.on('connection', function connection(ws) {
+    const user = new User(lastUserId++, ws)
+    connectedUsers.push(user)
+    console.log('Connected ')
+    ws.send('connected ' + user.id)
+
+    ws.on('message', data => {
+      console.log('Message incoming')
+      console.log(data)
+      for (const u of connectedUsers) {
+        if (u.ws != ws)
+          u.ws.send(data)
+      }
+    })
+
+    ws.on('close', () => {
+      console.log('closing...')
+      for (const u in connectedUsers)
+        if (connectedUsers[u].ws == ws)
+          connectedUsers.splice(u,1)
+      console.log(connectedUsers)
+    })
   })
-
-  ws.on('close', msg => {
-    console.log('closing...')
-    console.log(msg)
-  })
-})
-
-module.exports.server = server;
+}
+module.exports.server = connectionServer;

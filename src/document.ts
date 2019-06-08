@@ -23,7 +23,7 @@ export class SimpleDrawDocument {
 
   constructor() {
     this.currentId = 0;
-    this.communicator.start(this)
+    //this.communicator.start(this)
   }
 
   public getShapeId() {
@@ -187,6 +187,7 @@ export class SimpleDrawDocument {
   }
 
   receiveAction(action: string) {
+    console.log(action)
     const a = JSON.parse(action)
     const type = a.type
     const shape = a.shape
