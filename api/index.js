@@ -33,18 +33,14 @@ server.listen(3000, function () {
 });
 
 var wss = new WebSocket.Server({ server: server })
-first = false
 wss.on('connection', function connection(ws) {
   console.log('connected')
   ws.send('Connected')
 
   ws.on('message', data => {
     console.log('Message incoming')
-    console.log(data)
-    if (!first) {
-      ws.send('{"type":"create","shape":"rectangle","coords":"200 200 80 80"}')
-      first = true
-    }
+    ws.send('hello')
+    //ws.send('{"type":"translate","shape":[0],"coords":"-100 -100"}')
   })
 
   ws.on('close', msg => {

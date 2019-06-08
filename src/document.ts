@@ -1,6 +1,6 @@
 import { Shape, AreaSelected } from './shape'
 import { Action, CreateCircleAction, CreateRectangleAction, TranslateAction } from './actions'
-import { Render } from './render';
+import { Render, CanvasRender, SVGRender } from './render';
 import { FileManager, FileManagerFactory } from './file-manager';
 import { UndoManager } from "./undo";
 import axios from 'axios';
@@ -11,15 +11,23 @@ export class SimpleDrawDocument {
   static API_HOST = 'http://localhost:3000';
 
   //objects = new Array<Shape>()
+  canvasrenderers: CanvasRender[] = []
+  svgrenderers: SVGRender[] = []
   layers = new Array<Array<Shape>>()
   selectedLayer = 0
   undoManager = new UndoManager()
   selectedArea: Shape = null
   workingFilePath: string = null
   communicator: Communicator = new Communicator()
+  currentId: number
 
   constructor() {
+    this.currentId = 0;
     this.communicator.start(this)
+  }
+
+  public getShapeId() {
+    return this.currentId++
   }
 
   undo() {
@@ -28,6 +36,13 @@ export class SimpleDrawDocument {
 
   redo() {
     this.undoManager.redo();
+  }
+
+  drawAll() {
+    for (var render of this.svgrenderers)
+      this.draw(render)
+    for (var renderc of this.canvasrenderers)
+      this.draw(renderc)
   }
 
   draw(render: Render): void {
@@ -55,14 +70,14 @@ export class SimpleDrawDocument {
   }
 
   createRectangle(x: number, y: number, width: number, height: number): Shape {
-    const action = new CreateRectangleAction(this, x, y, width, height)
+    const action = new CreateRectangleAction(this, this.getShapeId(), x, y, width, height)
     console.log(action)
     this.communicator.send(action.serialize())
     return this.do(action)
   }
 
   createCircle(x: number, y: number, radius: number): Shape {
-    const action = new CreateCircleAction(this, x, y, radius)
+    const action = new CreateCircleAction(this, this.getShapeId(), x, y, radius)
     this.communicator.send(action.serialize())
     return this.do(action)
   }
@@ -72,6 +87,13 @@ export class SimpleDrawDocument {
     console.log(action)
     this.communicator.send(action.serialize())
     return this.do(action)
+  }
+
+  translateById(shapeId: number, xd: number, yd: number): void {
+    for (const l of this.layers)
+      for (const s of l)
+        if (s.id === shapeId)
+          this.translate(s, xd, yd)
   }
 
   new(): void {
@@ -168,16 +190,27 @@ export class SimpleDrawDocument {
     const a = JSON.parse(action)
     const type = a.type
     const shape = a.shape
+    const id = a.id
     const coords = a.coords.split(' ')
     console.log(a)
-    if(type === 'create'){
-      if(shape === 'circle'){
-        this.do(new CreateCircleAction(this, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10)))
-      } else if (shape === 'rectangle'){
-        this.do(new CreateRectangleAction(this, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10), parseInt(coords[3], 10)))
+    if (type === 'create') {
+      this.currentId = id
+      if (shape === 'circle') {
+        this.do(new CreateCircleAction(this, id, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10)))
+        this.drawAll()
+      } else if (shape === 'rectangle') {
+        this.do(new CreateRectangleAction(this, id, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10), parseInt(coords[3], 10)))
+        this.drawAll()
       }
-    } else if (type === 'translate'){
-      console.log('translate')
+    } else if (type === 'translate') {
+      for (const shapeId of shape) {
+        for (const l of this.layers)
+          for (const s of l)
+            if (s.id === shapeId) {
+              this.do(new TranslateAction(this, s, parseInt(coords[0], 10), parseInt(coords[1], 10)))
+              this.drawAll()
+            }
+      }
     }
   }
 }

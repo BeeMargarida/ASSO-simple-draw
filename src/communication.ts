@@ -1,8 +1,8 @@
 import { SimpleDrawDocument } from "document";
 
 //ligar sockets a mandar mensagens random entre 2 browsers
-//fazer serialize das actions
-//mandar actions
+//fazer serialize das actions DONE
+//mandar actions DONE
 //decidir qual action a mais recente para atualizar o projeto
 
 export class Communicator {

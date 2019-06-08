@@ -5,7 +5,7 @@ export abstract class Shape {
     color: string
     centerX: number
     centerY: number
-    constructor(public x: number, public y: number) { }
+    constructor(public id: number, public x: number, public y: number) { }
 
     abstract updateCenter() : void
 
@@ -20,11 +20,8 @@ export abstract class Shape {
 }
 
 export class Rectangle extends Shape {
-    centerX: number
-    centerY: number
-
-    constructor(public x: number, public y: number, public width: number, public height: number) {
-        super(x, y)
+    constructor(public id: number, public x: number, public y: number, public width: number, public height: number) {
+        super(id, x, y)
         this.centerX = x + width/2
         this.centerY = y + height/2
         this.color = 'black'
@@ -55,8 +52,8 @@ export class Rectangle extends Shape {
 }
 
 export class Circle extends Shape {
-    constructor(public x: number, public y: number, public radius: number) {
-        super(x, y)
+    constructor(public id: number, public x: number, public y: number, public radius: number) {
+        super(id, x, y)
         this.color = 'black'
         this.centerX = x
         this.centerY = y
@@ -89,8 +86,8 @@ export class Circle extends Shape {
 export class AreaSelected extends Shape {
     selectedShapes: Array<Shape>
 
-    constructor(public x: number, public y: number, public width: number, public height: number, public shapes: Array<Shape>) {
-        super(x, y)
+    constructor(public id: number, public x: number, public y: number, public width: number, public height: number, public shapes: Array<Shape>) {
+        super(id, x, y)
         this.centerX = x + width/2
         this.centerY = y + height/2
         this.color = 'yellow'

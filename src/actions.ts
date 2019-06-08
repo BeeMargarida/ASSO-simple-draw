@@ -17,40 +17,42 @@ abstract class CreateShapeAction<S extends Shape> implements Action<S> {
 
     undo() {
         var layers = new Array<Array<Shape>>()
-        for(var layer of this.doc.layers){
+        for (var layer of this.doc.layers) {
             layers.push(layer.filter(o => o !== this.shape))
         }
         this.doc.layers = layers
     }
 
-    abstract serialize() : string
+    abstract serialize(): string
 }
 
 export class CreateCircleAction extends CreateShapeAction<Circle> {
-    constructor(doc: SimpleDrawDocument, private x: number, private y: number, private radius: number) {
-        super(doc, new Circle(x, y, radius))
+    constructor(doc: SimpleDrawDocument, private id: number, private x: number, private y: number, private radius: number) {
+        super(doc, new Circle(id, x, y, radius))
     }
 
-    serialize() : string {
+    serialize(): string {
         let action = {
             type: 'create',
             shape: 'circle',
-            coords: ''+this.x+' '+this.y+' '+this.radius
+            id: this.id,
+            coords: '' + this.x + ' ' + this.y + ' ' + this.radius
         }
         return JSON.stringify(action)
     }
 }
 
 export class CreateRectangleAction extends CreateShapeAction<Rectangle> {
-    constructor(doc: SimpleDrawDocument, private x: number, private y: number, private width: number, private height: number) {
-        super(doc, new Rectangle(x, y, width, height))
+    constructor(doc: SimpleDrawDocument, private id: number, private x: number, private y: number, private width: number, private height: number) {
+        super(doc, new Rectangle(id, x, y, width, height))
     }
 
-    serialize() : string {
+    serialize(): string {
         let action = {
             type: 'create',
             shape: 'rectangle',
-            coords: ''+this.x+' '+this.y+' '+this.width+' '+this.height
+            id: this.id,
+            coords: '' + this.x + ' ' + this.y + ' ' + this.width + ' ' + this.height
         }
         return JSON.stringify(action)
     }
@@ -63,8 +65,8 @@ export class TranslateAction implements Action<void> {
     constructor(private doc: SimpleDrawDocument, public shape: Shape, private xd: number, private yd: number) { }
 
     do(): void {
-        if(this.shape instanceof AreaSelected){
-            for(const shape of this.shape.selectedShapes){
+        if (this.shape instanceof AreaSelected) {
+            for (const shape of this.shape.selectedShapes) {
                 shape.translate(this.xd, this.yd)
             }
         }
@@ -74,8 +76,8 @@ export class TranslateAction implements Action<void> {
     }
 
     undo() {
-        if(this.shape instanceof AreaSelected){
-            for(const shape of this.shape.selectedShapes){
+        if (this.shape instanceof AreaSelected) {
+            for (const shape of this.shape.selectedShapes) {
                 shape.translate(-this.xd, -this.yd)
             }
         }
@@ -83,11 +85,19 @@ export class TranslateAction implements Action<void> {
         this.shape.y = this.oldY
     }
 
-    serialize() : string {
+    serialize(): string {
+        let shapesIds: Array<number> = new Array<number>()
+        if (this.shape instanceof AreaSelected)
+            for (const s of this.shape.selectedShapes) {
+                shapesIds.push(s.id)
+            }
+        else
+            shapesIds.push(this.shape.id)
+
         let action = {
             type: 'translate',
-            shape: this.shape,
-            coords: ''+this.xd+' '+this.yd
+            shape: shapesIds,
+            coords: '' + this.xd + ' ' + this.yd
         }
         return JSON.stringify(action)
     }

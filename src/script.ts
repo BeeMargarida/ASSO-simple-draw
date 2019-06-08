@@ -31,10 +31,10 @@ function addMouseClickListener(render: CanvasRender | SVGRender, object: HTMLCan
         for (var s of sdd.layers[sdd.selectedLayer]) {
             if (s.checkIfHit(mx - rect.left, my - rect.top, render)) {
                 s.color = 'red'
-                drawAll()
+                sdd.drawAll()
             } else {
                 s.color = 'black'
-                drawAll()
+                sdd.drawAll()
             }
         }
     })
@@ -68,12 +68,12 @@ function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanva
         if (s.checkIfHit(mx - rect.left, my - rect.top, render)) {
             s.color = 'red'
             selected = s
-            drawAll()
+            sdd.drawAll()
             break
         } else {
             s.color = 'black'
             selected = null
-            drawAll()
+            sdd.drawAll()
         }
     }
 }
@@ -113,9 +113,9 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
             
             if(selectedShapes.length != 0) {
                 areaSelected = true
-                selected = new AreaSelected(upperLeftX, upperLeftY, Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
+                selected = new AreaSelected(sdd.getShapeId(), upperLeftX, upperLeftY, Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
                 sdd.selectedArea = selected
-                drawAll()
+                sdd.drawAll()
                 return
             }
             areaSelected = false
@@ -129,7 +129,7 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
         //selected.color = 'black'
         //selected = null
 
-        drawAll()
+        sdd.drawAll()
     }
 }
 
@@ -147,18 +147,11 @@ function createCanvas(width: number) {
     newCanvas.style.border = "1px solid red"
     drawSpace.appendChild(newCanvas)
     var render = new CanvasRender(newCanvas)
-    canvasrenderers.push(render)
+    sdd.canvasrenderers.push(render)
     addZoomListener(render, newCanvas)
     addMouseDownListener(render, newCanvas)
     addMouseUpListener(render, newCanvas)
-    drawAll()
-}
-
-function drawAll() {
-    for (var render of svgrenderers)
-        sdd.draw(render)
-    for (var renderc of canvasrenderers)
-        sdd.draw(renderc)
+    sdd.drawAll()
 }
 
 document.getElementById('new_canvas').addEventListener('click', () => {
@@ -174,7 +167,7 @@ document.getElementById('new_canvas').addEventListener('click', () => {
         else if (svgrenderers.length != 0)
             svgrenderers[0].centerX = width / 2
     }
-    drawAll()
+    sdd.drawAll()
 })
 
 function createSVG(width: number) {
@@ -189,11 +182,11 @@ function createSVG(width: number) {
     newSvg.style.border = "1px solid blue"
     drawSpace.appendChild(newSvg)
     var render = new SVGRender(newSvg)
-    svgrenderers.push(render)
+    sdd.svgrenderers.push(render)
     addZoomListener(render, newSvg)
     addMouseDownListener(render, newSvg)
     addMouseUpListener(render, newSvg)
-    drawAll()
+    sdd.drawAll()
 }
 
 document.getElementById('new_svg').addEventListener('click', () => {
@@ -209,36 +202,36 @@ document.getElementById('new_svg').addEventListener('click', () => {
         else if (svgrenderers.length != 0)
             svgrenderers[0].centerX = width / 2
     }
-    drawAll()
+    sdd.drawAll()
 })
 
 
 document.getElementById('new_rect').addEventListener('click', () => {
     sdd.createRectangle(200, 200, 80, 80)
-    drawAll()
+    sdd.drawAll()
 })
 
 document.getElementById('new_circ').addEventListener('click', () => {
     sdd.createCircle(200, 200, 30)
-    drawAll()
+    sdd.drawAll()
 })
 
 document.getElementById('undo').addEventListener('click', () => {
     sdd.undo()
-    drawAll()
+    sdd.drawAll()
 })
 
 document.getElementById('redo').addEventListener('click', () => {
     sdd.redo()
-    drawAll()
+    sdd.drawAll()
 })
 
 
 // LAYER
 document.getElementById('new_layer').addEventListener('click', () => sdd.addLayer())
-document.getElementById('delete_layer').addEventListener('click', () => { sdd.deleteLayer(); drawAll() })
-document.getElementById('previous_layer').addEventListener('click', (evt) => { sdd.previousLayer(evt); drawAll() })
-document.getElementById('next_layer').addEventListener('click', (evt) => { sdd.nextLayer(evt); drawAll() })
+document.getElementById('delete_layer').addEventListener('click', () => { sdd.deleteLayer(); sdd.drawAll() })
+document.getElementById('previous_layer').addEventListener('click', (evt) => { sdd.previousLayer(evt); sdd.drawAll() })
+document.getElementById('next_layer').addEventListener('click', (evt) => { sdd.nextLayer(evt); sdd.drawAll() })
 
 
 // CONSOLE
@@ -257,7 +250,7 @@ consoleIn.addEventListener('keydown', (event) => {
         consoleOut.innerHTML += '\n>> ';
         consoleOut.scrollTop = consoleOut.scrollHeight;
         consoleIn.value = "";
-        drawAll();
+        sdd.drawAll();
     }
 });
 
@@ -303,7 +296,7 @@ let saveModal: any = document.getElementById('saveModal');
 
 newBtn.addEventListener('click', () => {
     sdd.new();
-    drawAll();
+    sdd.drawAll();
 })
 
 loadBtn.addEventListener('click', () => {
@@ -313,7 +306,7 @@ loadBtn.addEventListener('click', () => {
 loadFile.addEventListener('change', () => {
     sdd.load(loadFile.files[0].name).then(() => {
         modalCancelBtn.click();
-        drawAll();
+        sdd.drawAll();
         sdd.updateDisabledButtons()
     }).catch((err) => window.alert(err));
 })
@@ -333,4 +326,11 @@ modalSaveBtn.addEventListener('click', () => {
     }).catch((err) => {
         window.alert(err)
     });
+})
+
+
+// CONNECTION
+let conBtn: HTMLInputElement = document.getElementById('conBtn') as HTMLInputElement;
+conBtn.addEventListener('click', () => {
+    sdd.communicator.send('connect ws://localhost:3000')
 })
