@@ -10,6 +10,8 @@ var svgrenderers: SVGRender[] = []
 const sdd = new SimpleDrawDocument()
 const interpreter = new Interpreter(sdd);
 
+var selectedLabel = document.getElementById('selected')
+
 function addZoomListener(render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
     object.addEventListener('DOMMouseScroll', (evt: any) => {
         evt.preventDefault()
@@ -59,6 +61,7 @@ function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanva
             return
         }
         selected = null
+        selectedLabel.innerHTML = 'none'
         sdd.selectedArea = null
         areaSelected = false
     }
@@ -69,11 +72,13 @@ function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanva
         if (s.checkIfHit(mx - rect.left, my - rect.top, render)) {
             s.color = 'red'
             selected = s
+            selectedLabel.innerHTML = '' + s.id
             sdd.drawAll()
             break
         } else {
             s.color = 'black'
             selected = null
+            selectedLabel.innerHTML = 'none'
             sdd.drawAll()
         }
     }
@@ -115,11 +120,13 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
             if (selectedShapes.length != 0) {
                 areaSelected = true
                 selected = new AreaSelected(sdd.getShapeId(), upperLeftX, upperLeftY, Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
+                selectedLabel.innerHTML = '' + selected.id
                 sdd.selectedArea = selected
                 sdd.drawAll()
                 return
             }
             areaSelected = false
+            selectedLabel.innerHTML = 'none'
         }
     }
     else if (didMouseMove) {
@@ -214,6 +221,18 @@ document.getElementById('new_rect').addEventListener('click', () => {
 
 document.getElementById('new_circ').addEventListener('click', () => {
     sdd.createCircle(200, 200, 30)
+    sdd.drawAll()
+})
+
+document.getElementById('delete_shape').addEventListener('click', () => {
+    if (selected){
+        sdd.deleteShape(selected)
+        selected = null
+        selectedLabel.innerHTML = 'none'
+        sdd.selectedArea = null
+        areaSelected = false
+    }
+
     sdd.drawAll()
 })
 
@@ -333,11 +352,13 @@ modalSaveBtn.addEventListener('click', () => {
 // CONNECTION
 let collabBtn: HTMLInputElement = document.getElementById('collabBtn') as HTMLInputElement;
 collabBtn.addEventListener('click', async () => {
-    await axios.post(SimpleDrawDocument.API_HOST + '/api/collab');
-    sdd.communicator.start(sdd)
+    window.alert('Collab mode activated. Socket: ws://localhost:3000')
+    await axios.post(SimpleDrawDocument.API_HOST + '/api/collab')
 })
 
 let conBtn: HTMLInputElement = document.getElementById('conBtn') as HTMLInputElement;
-conBtn.addEventListener('click', async () => {
-    sdd.communicator.start(sdd)
+conBtn.addEventListener('click', () => {
+    var socket: string = window.prompt('Enter ws url:')
+    if (socket != '')
+        sdd.communicator.start(sdd, socket)
 })

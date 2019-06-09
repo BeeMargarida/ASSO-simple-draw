@@ -12,9 +12,9 @@ export class Communicator {
     document: SimpleDrawDocument
     id: number
 
-    start(sdd: SimpleDrawDocument) {
+    start(sdd: SimpleDrawDocument, socket: string) {
         this.document = sdd
-        this.webSocket = new WebSocket('ws://localhost:3000')
+        this.webSocket = new WebSocket(socket)
 
         var self = this
         this.webSocket.onopen = function(event) {

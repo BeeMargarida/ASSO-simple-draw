@@ -26,6 +26,39 @@ abstract class CreateShapeAction<S extends Shape> implements Action<S> {
     abstract serialize(): string
 }
 
+export class DeleteShapeAction<S extends Shape> implements Action<S> {
+    shapes: Array<Shape> = []
+    constructor(private doc: SimpleDrawDocument, public shapeIds: number[], public layer: number) { }
+
+    do(): S {
+        for(const s of this.shapeIds){
+            for(const layer of this.doc.layers){
+                for(const shape of layer){
+                    if(shape.id == s){
+                        this.shapes.push(shape)
+                        this.doc.delete(shape)
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    undo(): void {
+        for(const s of this.shapes)
+            this.doc.layers[this.layer].push(s)
+    }
+
+    serialize(): string {
+        let action = {
+            type: 'delete',
+            shape: this.shapeIds,
+            layer: this.layer
+        }
+        return JSON.stringify(action)
+    }
+}
+
 export class CreateCircleAction extends CreateShapeAction<Circle> {
     constructor(doc: SimpleDrawDocument, private id: number, private x: number, private y: number, private radius: number) {
         super(doc, new Circle(id, x, y, radius))
@@ -64,7 +97,7 @@ export class TranslateAction implements Action<void> {
 
     constructor(private doc: SimpleDrawDocument, public shape: Shape, private xd: number, private yd: number) { }
 
-    do(): void {
+    do(): Shape {
         if (this.shape instanceof AreaSelected) {
             for (const shape of this.shape.selectedShapes) {
                 shape.translate(this.xd, this.yd)
@@ -73,6 +106,7 @@ export class TranslateAction implements Action<void> {
         this.oldX = this.shape.x
         this.oldY = this.shape.y
         this.shape.translate(this.xd, this.yd)
+        return this.shape
     }
 
     undo() {
