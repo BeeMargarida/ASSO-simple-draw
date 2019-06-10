@@ -1,6 +1,8 @@
 import { SimpleDrawDocument } from './document'
 import { Interpreter } from './interpreter';
 import { CanvasRender, SVGRender } from './render';
+import { getCoordWithZoom } from "./utils";
+import axios from 'axios';
 import { Shape, AreaSelected } from './shape';
 
 var canvasrenderers: CanvasRender[] = []
@@ -8,6 +10,8 @@ var svgrenderers: SVGRender[] = []
 
 const sdd = new SimpleDrawDocument()
 const interpreter = new Interpreter(sdd);
+
+var selectedLabel = document.getElementById('selected')
 
 function addZoomListener(render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
     object.addEventListener('DOMMouseScroll', (evt: any) => {
@@ -31,10 +35,10 @@ function addMouseClickListener(render: CanvasRender | SVGRender, object: HTMLCan
         for (var s of sdd.layers[sdd.selectedLayer]) {
             if (s.checkIfHit(mx - rect.left, my - rect.top, render)) {
                 s.color = 'red'
-                drawAll()
+                sdd.drawAll()
             } else {
                 s.color = 'black'
-                drawAll()
+                sdd.drawAll()
             }
         }
     })
@@ -52,8 +56,8 @@ function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanva
         case 1:
             onMouseDownLeft(e, render, object)
             break;
-        case 3:
-            onMouseDownRight(e, render, object)
+        case 2:
+            onMouseDownMiddle(e, render, object)
             break;
     }
 }
@@ -71,6 +75,7 @@ function onMouseDownLeft(e: any, render: CanvasRender | SVGRender, object: HTMLC
             return
         }
         selected = null
+        selectedLabel.innerHTML = 'none'
         sdd.selectedArea = null
         areaSelected = false
     }
@@ -81,17 +86,19 @@ function onMouseDownLeft(e: any, render: CanvasRender | SVGRender, object: HTMLC
         if (s.checkIfHit(mx - rect.left, my - rect.top, render)) {
             s.color = 'red'
             selected = s
-            drawAll()
+            selectedLabel.innerHTML = '' + s.id
+            sdd.drawAll()
             break
         } else {
             s.color = 'black'
             selected = null
-            drawAll()
+            selectedLabel.innerHTML = 'none'
+            sdd.drawAll()
         }
     }
 }
 
-function onMouseDownRight(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
+function onMouseDownMiddle(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
     var rect = e.target.getBoundingClientRect()
     var mx = e.clientX
     var my = e.clientY
@@ -109,8 +116,8 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
         case 1:
             onMouseUpLeft(e, render)
             break;
-        case 3:
-            onMouseUpRight(e, render)
+        case 2:
+            onMouseUpMiddle(e, render)
             break;
     }
 
@@ -118,11 +125,14 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
 
 function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
     var rect = e.target.getBoundingClientRect()
-
+    console.log("RECT: " + rect.left + " : " + rect.top)
+    //CHANGE
     var mx = e.clientX
     var my = e.clientY
     var deltaX = mx - lastX
     var deltaY = my - lastY
+
+    console.log("X: " + lastX + " : " + (render.centerX - lastX))
     var upperLeftX = ((lastX - rect.left) + deltaX / 2) - Math.abs(deltaX) / 2
     var upperLeftY = ((lastY - rect.top) + deltaY / 2) - Math.abs(deltaY) / 2
 
@@ -131,6 +141,8 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
     if (selected == null) {
         if (didMouseMove) {
             // Area Selection
+            console.log("CORDS: " + (render.centerX - lastX) + " : " + (render.centerY - lastY))
+            console.log("AREA SELECTION: " + upperLeftX + " : " + upperLeftY)
             var selectedShapes: Array<Shape> = new Array<Shape>()
             // Get all selected shapes
             for (var x of sdd.layers[sdd.selectedLayer]) {
@@ -145,32 +157,40 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
 
             if (selectedShapes.length != 0) {
                 areaSelected = true
-                selected = new AreaSelected(upperLeftX, upperLeftY, Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
+                //TODO: PROBLEM HERE!!!
+                //selected = new AreaSelected(sdd.getShapeId(), render.centerX - upperLeftX + ((upperLeftX - render.centerX + rect.left)*(render.zoom - 1)), render.centerY - upperLeftY + ((upperLeftY - render.centerY + rect.top)*(render.zoom - 1)), Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
+                selected = new AreaSelected(sdd.getShapeId(), render.centerX - upperLeftX - upperLeftX*(render.zoom - 1), render.centerY - upperLeftY - upperLeftY*(render.zoom - 1), Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
+                selectedLabel.innerHTML = '' + selected.id
                 sdd.selectedArea = selected
-                drawAll()
+                sdd.drawAll()
                 return
             }
             areaSelected = false
+            selectedLabel.innerHTML = 'none'
         }
     }
     else if (didMouseMove) {
         // experimentar onMouseMove com o translate sem action para se conseguir ver o objeto a mover, mas não ser guardado como uma action para undo/redo
-        sdd.translate(selected, deltaX / render.zoom, deltaY / render.zoom)
+        sdd.translate(selected, -deltaX / render.zoom, -deltaY / render.zoom)
         //selected.translate(mx-rect.left-selected.x-(selected.centerX-selected.x), my-rect.top-selected.y-(selected.centerY-selected.y))
-        drawAll()
+
+        sdd.drawAll()
     }
 }
 
-function onMouseUpRight(e: any, render: CanvasRender | SVGRender) {
+function onMouseUpMiddle(e: any, render: CanvasRender | SVGRender) {
     var rect = e.target.getBoundingClientRect()
 
     var mx = e.clientX
     var my = e.clientY
-    var deltaX = mx - lastX
-    var deltaY = my - lastY
+    var deltaX = mx - lastRightX
+    var deltaY = my - lastRightY
 
-    //TODO: translate scene by deltaX
-    
+    render.translateScene(deltaX, deltaY)
+    sdd.drawAll()
+
+    //sdd.translateScene(deltaX / render.zoom, deltaY / render.zoom)
+
 }
 
 function addMouseUpListener(render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
@@ -178,7 +198,6 @@ function addMouseUpListener(render: CanvasRender | SVGRender, object: HTMLCanvas
 }
 
 function createCanvas(width: number) {
-    sdd.new()
     var drawSpace = document.getElementById('draw_space')
     var newCanvas = document.createElement('canvas')
     newCanvas.width = width
@@ -187,18 +206,11 @@ function createCanvas(width: number) {
     newCanvas.style.border = "1px solid red"
     drawSpace.appendChild(newCanvas)
     var render = new CanvasRender(newCanvas)
-    canvasrenderers.push(render)
+    sdd.canvasrenderers.push(render)
     addZoomListener(render, newCanvas)
     addMouseDownListener(render, newCanvas)
     addMouseUpListener(render, newCanvas)
-    drawAll()
-}
-
-function drawAll() {
-    for (var render of svgrenderers)
-        sdd.draw(render)
-    for (var renderc of canvasrenderers)
-        sdd.draw(renderc)
+    sdd.drawAll()
 }
 
 document.getElementById('new_canvas').addEventListener('click', () => {
@@ -214,7 +226,7 @@ document.getElementById('new_canvas').addEventListener('click', () => {
         else if (svgrenderers.length != 0)
             svgrenderers[0].centerX = width / 2
     }
-    drawAll()
+    sdd.drawAll()
 })
 
 function createSVG(width: number) {
@@ -229,11 +241,11 @@ function createSVG(width: number) {
     newSvg.style.border = "1px solid blue"
     drawSpace.appendChild(newSvg)
     var render = new SVGRender(newSvg)
-    svgrenderers.push(render)
+    sdd.svgrenderers.push(render)
     addZoomListener(render, newSvg)
     addMouseDownListener(render, newSvg)
     addMouseUpListener(render, newSvg)
-    drawAll()
+    sdd.drawAll()
 }
 
 document.getElementById('new_svg').addEventListener('click', () => {
@@ -249,36 +261,48 @@ document.getElementById('new_svg').addEventListener('click', () => {
         else if (svgrenderers.length != 0)
             svgrenderers[0].centerX = width / 2
     }
-    drawAll()
+    sdd.drawAll()
 })
 
 
 document.getElementById('new_rect').addEventListener('click', () => {
     sdd.createRectangle(200, 200, 80, 80)
-    drawAll()
+    sdd.drawAll()
 })
 
 document.getElementById('new_circ').addEventListener('click', () => {
     sdd.createCircle(200, 200, 30)
-    drawAll()
+    sdd.drawAll()
+})
+
+document.getElementById('delete_shape').addEventListener('click', () => {
+    if (selected) {
+        sdd.deleteShape(selected)
+        selected = null
+        selectedLabel.innerHTML = 'none'
+        sdd.selectedArea = null
+        areaSelected = false
+    }
+
+    sdd.drawAll()
 })
 
 document.getElementById('undo').addEventListener('click', () => {
     sdd.undo()
-    drawAll()
+    sdd.drawAll()
 })
 
 document.getElementById('redo').addEventListener('click', () => {
     sdd.redo()
-    drawAll()
+    sdd.drawAll()
 })
 
 
 // LAYER
 document.getElementById('new_layer').addEventListener('click', () => sdd.addLayer())
-document.getElementById('delete_layer').addEventListener('click', () => { sdd.deleteLayer(); drawAll() })
-document.getElementById('previous_layer').addEventListener('click', (evt) => { sdd.previousLayer(evt); drawAll() })
-document.getElementById('next_layer').addEventListener('click', (evt) => { sdd.nextLayer(evt); drawAll() })
+document.getElementById('delete_layer').addEventListener('click', () => { sdd.deleteLayer(); sdd.drawAll() })
+document.getElementById('previous_layer').addEventListener('click', (evt) => { sdd.previousLayer(evt); sdd.drawAll() })
+document.getElementById('next_layer').addEventListener('click', (evt) => { sdd.nextLayer(evt); sdd.drawAll() })
 
 
 // CONSOLE
@@ -297,7 +321,7 @@ consoleIn.addEventListener('keydown', (event) => {
         consoleOut.innerHTML += '\n>> ';
         consoleOut.scrollTop = consoleOut.scrollHeight;
         consoleIn.value = "";
-        drawAll();
+        sdd.drawAll();
     }
 });
 
@@ -343,7 +367,7 @@ let saveModal: any = document.getElementById('saveModal');
 
 newBtn.addEventListener('click', () => {
     sdd.new();
-    drawAll();
+    sdd.drawAll();
 })
 
 loadBtn.addEventListener('click', () => {
@@ -353,7 +377,7 @@ loadBtn.addEventListener('click', () => {
 loadFile.addEventListener('change', () => {
     sdd.load(loadFile.files[0].name).then(() => {
         modalCancelBtn.click();
-        drawAll();
+        sdd.drawAll();
         sdd.updateDisabledButtons()
     }).catch((err) => window.alert(err));
 })
@@ -373,4 +397,19 @@ modalSaveBtn.addEventListener('click', () => {
     }).catch((err) => {
         window.alert(err)
     });
+})
+
+
+// CONNECTION
+let collabBtn: HTMLInputElement = document.getElementById('collabBtn') as HTMLInputElement;
+collabBtn.addEventListener('click', async () => {
+    window.alert('Collab mode activated. Socket: ws://localhost:3000')
+    await axios.post(SimpleDrawDocument.API_HOST + '/api/collab')
+})
+
+let conBtn: HTMLInputElement = document.getElementById('conBtn') as HTMLInputElement;
+conBtn.addEventListener('click', () => {
+    var socket: string = window.prompt('Enter ws url:')
+    if (socket != '')
+        sdd.communicator.start(sdd, socket)
 })

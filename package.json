@@ -8,7 +8,7 @@
     "main": "script.js",
     "devDependencies": {
         "@types/jquery": "^3.3.29",
-        "@types/node": "^12.0.1",
+        "@types/node": "^12.0.5",
         "axios": "^0.18.0",
         "browserify": "^16.2.2",
         "npm": "^6.0.1",
@@ -22,5 +22,9 @@
         "browser": "npm run build; npm run browserify; google-chrome-stable index.html",
         "firefox": "npm run build; npm run browserify; firefox index.html",
         "start": "npm run build; node build/main.js"
+    },
+    "dependencies": {
+        "@types/ws": "^6.0.1",
+        "ws": "^7.0.0"
     }
 }

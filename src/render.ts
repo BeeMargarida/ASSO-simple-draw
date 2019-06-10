@@ -5,6 +5,7 @@ export interface Render {
     draw(...objs: Array<Shape>): void
 
     applyZoom(val: number): void
+    translateScene(xd: number, yd: number): void
 }
 
 export class SVGRender implements Render {
@@ -47,6 +48,11 @@ export class SVGRender implements Render {
         val = val > 0 ? 6 / 5 : 5 / 6
         this.zoom *= val
     }
+
+    translateScene(xd: number, yd: number): void {
+        this.centerX += xd
+        this.centerY += yd
+    }
 }
 
 export class CanvasRender implements Render {
@@ -79,6 +85,8 @@ export class CanvasRender implements Render {
                     0, 0, 2 * Math.PI)
                 this.ctx.stroke()
             } else if (shape instanceof Rectangle || shape instanceof AreaSelected) {
+                console.log("SHAPE: " + shape.x + " : " + shape.y)
+                console.log("SHAPE ZOOM: " + getCoordWithZoom(shape.x, this.centerX, this.zoom) + " : " + getCoordWithZoom(shape.y, this.centerY, this.zoom))
                 this.ctx.strokeStyle = shape.color
                 this.ctx.strokeRect(
                     getCoordWithZoom(shape.x, this.centerX, this.zoom),
@@ -95,5 +103,10 @@ export class CanvasRender implements Render {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
         this.zoom *= val;
         //console.log(this.zoom)
+    }
+
+    translateScene(xd: number, yd: number): void {
+        this.centerX += xd
+        this.centerY += yd
     }
 }

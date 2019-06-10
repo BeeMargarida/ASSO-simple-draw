@@ -1,33 +1,59 @@
 import { Shape, AreaSelected } from './shape'
-import { Action, CreateCircleAction, CreateRectangleAction, TranslateAction } from './actions'
-import { Render } from './render';
+import { Action, CreateCircleAction, CreateRectangleAction, TranslateAction, DeleteShapeAction } from './actions'
+import { Render, CanvasRender, SVGRender } from './render';
 import { FileManager, FileManagerFactory } from './file-manager';
 import { UndoManager } from "./undo";
 import axios from 'axios';
 import { deflateRaw } from 'zlib';
+import { Communicator } from './communication';
+import { isRegExp } from 'util';
 
 export class SimpleDrawDocument {
   static API_HOST = 'http://localhost:3000';
 
   //objects = new Array<Shape>()
+  canvasrenderers: CanvasRender[] = []
+  svgrenderers: SVGRender[] = []
   layers = new Array<Array<Shape>>()
   selectedLayer = 0
   undoManager = new UndoManager()
   selectedArea: Shape = null
   workingFilePath: string = null
+  communicator: Communicator = new Communicator()
+  currentId: number
+
+  constructor() {
+    this.currentId = 0;
+  }
+
+  public getShapeId() {
+    return this.currentId++
+  }
 
   undo() {
+    this.communicator.send(JSON.stringify({ type: 'undo' }))
     this.undoManager.undo();
   }
 
   redo() {
+    this.communicator.send(JSON.stringify({ type: 'redo' }))
     this.undoManager.redo();
   }
 
+  drawAll() {
+    for (var render of this.svgrenderers)
+      this.draw(render)
+    for (var renderc of this.canvasrenderers)
+      this.draw(renderc)
+  }
+
   draw(render: Render): void {
-    var objs = new Array<Shape>()
+    if(this.layers.length == 0)
+      this.layers.push(new Array<Shape>())
+    
+      var objs = new Array<Shape>()
     this.layers.forEach((objects, idx) => {
-      if(objects.length != 0 || idx == this.selectedLayer)
+      if (objects.length != 0 || idx == this.selectedLayer)
         objs.push(...objects)
     });
     objs.push(...this.layers[this.selectedLayer])
@@ -46,16 +72,64 @@ export class SimpleDrawDocument {
     return a.do();
   }
 
+  deleteShape(selected: Shape): Shape {
+    let action
+    if (selected instanceof AreaSelected){
+      let ids = []
+      for(const s of selected.selectedShapes)
+        ids.push(s.id)
+      action = new DeleteShapeAction(this, ids, this.selectedLayer)
+    }
+    else
+      action = new DeleteShapeAction(this, [selected.id], this.selectedLayer)
+    this.communicator.send(action.serialize())
+    return this.do(action)
+  }
+
+  delete(selected: Shape): void {
+    for (const l of this.layers)
+      for (let s = 0; s < l.length; s++)
+        if (l[s].id == selected.id) {
+          l.splice(s, 1)
+          break
+        }
+  }
+
   createRectangle(x: number, y: number, width: number, height: number): Shape {
-    return this.do(new CreateRectangleAction(this, x, y, width, height))
+    const action = new CreateRectangleAction(this, this.getShapeId(), x, y, width, height)
+    this.communicator.send(action.serialize())
+    return this.do(action)
   }
 
   createCircle(x: number, y: number, radius: number): Shape {
-    return this.do(new CreateCircleAction(this, x, y, radius))
+    const action = new CreateCircleAction(this, this.getShapeId(), x, y, radius)
+    this.communicator.send(action.serialize())
+    return this.do(action)
   }
 
-  translate(s: Shape, xd: number, yd: number): void {
-    return this.do(new TranslateAction(this, s, xd, yd))
+  translate(s: Shape, xd: number, yd: number): Shape {
+    const action = new TranslateAction(this, s, xd, yd)
+    this.communicator.send(action.serialize())
+    return this.do(action)
+  }
+
+  translateScene(xd: number, yd: number): void {
+    this.layers.forEach((objects) => {
+      objects.forEach(shape => {
+        const action = new TranslateAction(this, shape, xd, yd)
+        this.communicator.send(action.serialize())  
+        this.do(action)
+      });
+    });
+
+    return;
+  }
+
+  translateById(shapeId: number, xd: number, yd: number): void {
+    for (const l of this.layers)
+      for (const s of l)
+        if (s.id === shapeId)
+          this.translate(s, xd, yd)
   }
 
   new(): void {
@@ -73,7 +147,7 @@ export class SimpleDrawDocument {
   }
 
   deleteLayer(): void {
-    if(this.layers.length != 1){
+    if (this.layers.length != 1) {
       this.layers.splice(this.selectedLayer, 1)
       this.selectedLayer = this.selectedLayer == 0 ? 0 : this.selectedLayer - 1
       this.updateDisabledButtons()
@@ -81,13 +155,13 @@ export class SimpleDrawDocument {
   }
 
   updateDisabledButtons(): void {
-    if(this.selectedLayer >= this.layers.length - 1){
+    if (this.selectedLayer >= this.layers.length - 1) {
       document.getElementById("next_layer").classList.add("disabled")
     }
     else {
       document.getElementById("next_layer").classList.remove("disabled")
     }
-    if(this.selectedLayer == 0){
+    if (this.selectedLayer == 0) {
       document.getElementById("previous_layer").classList.add("disabled")
     }
     else {
@@ -146,5 +220,52 @@ export class SimpleDrawDocument {
     const fileManager = FileManagerFactory.getFileManager(fileName);
     this.layers = fileManager.load(res.data.content);
     this.workingFilePath = fileName;
+  }
+
+  receiveAction(action: string) {
+    const a = JSON.parse(action)
+    const type = a.type
+    const shape = a.shape
+    if (type === 'create') {
+      const id = a.id
+      const coords = a.coords.split(' ')
+      this.currentId = id
+      if (shape === 'circle') {
+        const act = new CreateCircleAction(this, id, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10))
+        this.undoManager.onActionDone(act);
+        this.do(act)
+        this.drawAll()
+      } else if (shape === 'rectangle') {
+        const act = new CreateRectangleAction(this, id, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10), parseInt(coords[3], 10))
+        this.undoManager.onActionDone(act);
+        this.do(act)
+        this.drawAll()
+      }
+    } else if (type === 'translate') {
+      const id = a.id
+      const coords = a.coords.split(' ')
+      for (const shapeId of shape) {
+        for (const l of this.layers)
+          for (const s of l)
+            if (s.id === shapeId) {
+              const act = new TranslateAction(this, s, parseInt(coords[0], 10), parseInt(coords[1], 10))
+              this.undoManager.onActionDone(act);
+              this.do(act)
+              this.drawAll()
+            }
+      }
+    } else if (type === 'delete') {
+      const layer = a.layer
+      const act = new DeleteShapeAction(this, shape, layer)
+      this.undoManager.onActionDone(act)
+      this.do(act)
+      this.drawAll()
+    } else if (type === 'undo') {
+      this.undoManager.undo();
+      this.drawAll()
+    } else if (type === 'redo') {
+      this.undoManager.redo();
+      this.drawAll()
+    }
   }
 }
