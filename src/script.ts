@@ -125,24 +125,21 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
 
 function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
     var rect = e.target.getBoundingClientRect()
-    console.log("RECT: " + rect.left + " : " + rect.top)
-    //CHANGE
     var mx = e.clientX
     var my = e.clientY
     var deltaX = mx - lastX
     var deltaY = my - lastY
 
-    console.log("X: " + lastX + " : " + (render.centerX - lastX))
-    var upperLeftX = ((lastX - rect.left) + deltaX / 2) - Math.abs(deltaX) / 2
-    var upperLeftY = ((lastY - rect.top) + deltaY / 2) - Math.abs(deltaY) / 2
+    console.log("X: " + lastX + " : " + (render.centerX - lastX - lastX * (render.zoom - 1)))
 
     var didMouseMove = (deltaX != 0 && deltaY != 0) ? true : false
 
     if (selected == null) {
         if (didMouseMove) {
             // Area Selection
-            console.log("CORDS: " + (render.centerX - lastX) + " : " + (render.centerY - lastY))
-            console.log("AREA SELECTION: " + upperLeftX + " : " + upperLeftY)
+            var upperLeftX = ((lastX - rect.left) + (deltaX) / 2) - Math.abs(deltaX) / 2
+            var upperLeftY = ((lastY - rect.top) + (deltaY) / 2) - Math.abs(deltaY) / 2
+
             var selectedShapes: Array<Shape> = new Array<Shape>()
             // Get all selected shapes
             for (var x of sdd.layers[sdd.selectedLayer]) {
@@ -158,8 +155,10 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
             if (selectedShapes.length != 0) {
                 areaSelected = true
                 //TODO: PROBLEM HERE!!!
-                //selected = new AreaSelected(sdd.getShapeId(), render.centerX - upperLeftX + ((upperLeftX - render.centerX + rect.left)*(render.zoom - 1)), render.centerY - upperLeftY + ((upperLeftY - render.centerY + rect.top)*(render.zoom - 1)), Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
-                selected = new AreaSelected(sdd.getShapeId(), render.centerX - upperLeftX - upperLeftX*(render.zoom - 1), render.centerY - upperLeftY - upperLeftY*(render.zoom - 1), Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
+                let areaSelectedX = render.centerX - upperLeftX + upperLeftX*(render.zoom - 1) //not working
+                let areaSelectedY = render.centerY - upperLeftY + upperLeftY*(render.zoom - 1) //not working
+                selected = new AreaSelected(sdd.getShapeId(), areaSelectedX, areaSelectedY, Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
+                //selected = new AreaSelected(sdd.getShapeId(), render.centerX - upperLeftX - upperLeftX*(render.zoom - 1), render.centerY - upperLeftY - upperLeftY*(render.zoom - 1), Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
                 selectedLabel.innerHTML = '' + selected.id
                 sdd.selectedArea = selected
                 sdd.drawAll()
@@ -188,9 +187,6 @@ function onMouseUpMiddle(e: any, render: CanvasRender | SVGRender) {
 
     render.translateScene(deltaX, deltaY)
     sdd.drawAll()
-
-    //sdd.translateScene(deltaX / render.zoom, deltaY / render.zoom)
-
 }
 
 function addMouseUpListener(render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {

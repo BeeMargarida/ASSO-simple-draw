@@ -16,8 +16,8 @@ export class SVGRender implements Render {
 
     constructor(svg: SVGSVGElement) {
         this.svg = svg
-        this.centerX = this.svg.clientWidth / 2
-        this.centerY = this.svg.clientHeight / 2
+        this.centerX = parseInt(this.svg.getAttribute("width")) / 2
+        this.centerY = parseInt(this.svg.getAttribute("height")) / 2
         this.zoom = 1
     }
 
