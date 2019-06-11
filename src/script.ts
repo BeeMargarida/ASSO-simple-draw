@@ -67,6 +67,7 @@ function onMouseDownLeft(e: any, render: CanvasRender | SVGRender, object: HTMLC
     var rect = e.target.getBoundingClientRect()
     var mx = e.clientX
     var my = e.clientY
+    console.log("RX: " + mx + " RY: " + my)
     lastX = mx
     lastY = my
 
@@ -155,8 +156,10 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
 
             if (selectedShapes.length != 0) {
                 areaSelected = true
-                upperLeftX = (upperLeftX + render.centerX * (render.zoom - 1)) / render.zoom
-                upperLeftY = (upperLeftY + render.centerY * (render.zoom - 1)) / render.zoom
+                // upperLeftX = (upperLeftX + render.centerX * (render.zoom - 1)) / render.zoom
+                // upperLeftY = (upperLeftY + render.centerY * (render.zoom - 1)) / render.zoom
+                upperLeftX = (upperLeftX-3*render.centerX+2*render.originalCenterX)/render.zoom + 2*render.centerX - render.originalCenterX
+                upperLeftY = (upperLeftY-3*render.centerY+2*render.originalCenterY)/render.zoom + 2*render.centerY - render.originalCenterY
                 selected = new AreaSelected(sdd.getShapeId(), upperLeftX, upperLeftY, Math.abs(deltaX / render.zoom), Math.abs(deltaY / render.zoom), selectedShapes)
                 selectedLabel.innerHTML = '' + selected.id
                 sdd.selectedArea = selected

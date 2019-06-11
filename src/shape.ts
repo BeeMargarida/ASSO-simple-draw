@@ -33,16 +33,16 @@ export class Rectangle extends Shape {
     }
 
     checkIfHit(mx: number, my: number, render: CanvasRender | SVGRender): boolean {
-        var sx = getCoordWithZoom(this.x, render.centerX, render.zoom)
-        var sy = getCoordWithZoom(this.y, render.centerY, render.zoom)
+        var sx = getCoordWithZoom(this.x, render.originalCenterX, render.centerX, render.zoom)
+        var sy = getCoordWithZoom(this.y, render.originalCenterY, render.centerY, render.zoom)
         if(mx >= sx && my >= sy && mx <= sx + this.width*render.zoom && my <= sy + this.height*render.zoom)
             return true
         return false
     }
 
     checkIfBetween(startX: number, startY: number, width: number, height: number, render: CanvasRender | SVGRender) : boolean {
-        var sx = getCoordWithZoom(this.x, render.centerX, render.zoom)
-        var sy = getCoordWithZoom(this.y, render.centerY, render.zoom)
+        var sx = getCoordWithZoom(this.x, render.originalCenterX, render.centerX, render.zoom)
+        var sy = getCoordWithZoom(this.y, render.originalCenterY, render.centerY, render.zoom)
         var lastX = startX + width
         var lastY = startY + height
         if(startX <= sx && (sx + this.width*render.zoom) <= lastX && startY <= sy && (sy + this.height*render.zoom) <= lastY)
@@ -65,16 +65,16 @@ export class Circle extends Shape {
     }
     
     checkIfHit(mx: number, my: number, render: CanvasRender | SVGRender): boolean {
-        var sx = getCoordWithZoom(this.x, render.centerX, render.zoom)
-        var sy = getCoordWithZoom(this.y, render.centerY, render.zoom)
+        var sx = getCoordWithZoom(this.x, render.originalCenterX, render.centerX, render.zoom)
+        var sy = getCoordWithZoom(this.y, render.originalCenterY, render.centerY, render.zoom)
         var dx = mx - sx
         var dy = my - sy
         return dx * dx + dy * dy <= this.radius*render.zoom * this.radius*render.zoom
     }
 
     checkIfBetween(startX: number, startY: number, width: number, height: number, render: CanvasRender | SVGRender) : boolean {
-        var sx = getCoordWithZoom(this.x, render.centerX, render.zoom)
-        var sy = getCoordWithZoom(this.y, render.centerY, render.zoom)
+        var sx = getCoordWithZoom(this.x, render.originalCenterX, render.centerX, render.zoom)
+        var sy = getCoordWithZoom(this.y, render.originalCenterY, render.centerY, render.zoom)
         var lastX = startX + width
         var lastY = startY + height
         if(startX <= sx && sx <= lastX && startY <= sy && sy <= lastY)
@@ -105,16 +105,16 @@ export class AreaSelected extends Shape {
     }
 
     checkIfHit(mx: number, my: number, render: CanvasRender | SVGRender): boolean {
-        var sx = getCoordWithZoom(this.x, render.centerX, render.zoom)
-        var sy = getCoordWithZoom(this.y, render.centerY, render.zoom)
+        var sx = getCoordWithZoom(this.x, render.originalCenterX, render.centerX, render.zoom)
+        var sy = getCoordWithZoom(this.y, render.originalCenterY, render.centerY, render.zoom)
         if(mx >= sx && my >= sy && mx <= sx + this.width*render.zoom && my <= sy + this.height*render.zoom)
             return true
         return false
     }
 
     checkIfBetween(startX: number, startY: number, width: number, height: number, render: CanvasRender | SVGRender) : boolean {
-        var sx = getCoordWithZoom(this.x, render.centerX, render.zoom)
-        var sy = getCoordWithZoom(this.y, render.centerY, render.zoom)
+        var sx = getCoordWithZoom(this.x, render.originalCenterX, render.centerX, render.zoom)
+        var sy = getCoordWithZoom(this.y, render.originalCenterY, render.centerY, render.zoom)
         var lastX = startX + width
         var lastY = startY + height
         if(startX <= sx && (sx + this.width*render.zoom) <= lastX && startY <= sy && (sy + this.height*render.zoom) <= lastY)
