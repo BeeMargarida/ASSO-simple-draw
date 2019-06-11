@@ -129,8 +129,10 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
     var my = e.clientY
     var deltaX = mx - lastX
     var deltaY = my - lastY
-
-    console.log("X: " + lastX + " : " + (render.centerX - lastX - lastX * (render.zoom - 1)))
+    var upperLeftX = (lastX < mx) ? (lastX - rect.left) : (mx - rect.left)
+    var upperLeftY = (lastY < my) ? (lastY - rect.top) : (my - rect.top)
+    // var upperLeftX = ((lastX - rect.left) + deltaX / 2) - Math.abs(deltaX) / 2
+    // var upperLeftY = ((lastY - rect.top) + deltaY / 2) - Math.abs(deltaY) / 2
 
     var didMouseMove = (deltaX != 0 && deltaY != 0) ? true : false
 
@@ -154,11 +156,9 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
 
             if (selectedShapes.length != 0) {
                 areaSelected = true
-                //TODO: PROBLEM HERE!!!
-                let areaSelectedX = render.centerX - upperLeftX + upperLeftX*(render.zoom - 1) //not working
-                let areaSelectedY = render.centerY - upperLeftY + upperLeftY*(render.zoom - 1) //not working
-                selected = new AreaSelected(sdd.getShapeId(), areaSelectedX, areaSelectedY, Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
-                //selected = new AreaSelected(sdd.getShapeId(), render.centerX - upperLeftX - upperLeftX*(render.zoom - 1), render.centerY - upperLeftY - upperLeftY*(render.zoom - 1), Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
+                upperLeftX = (upperLeftX + render.centerX * (render.zoom - 1)) / render.zoom
+                upperLeftY = (upperLeftY + render.centerY * (render.zoom - 1)) / render.zoom
+                selected = new AreaSelected(sdd.getShapeId(), upperLeftX, upperLeftY, Math.abs(deltaX / render.zoom), Math.abs(deltaY / render.zoom), selectedShapes)
                 selectedLabel.innerHTML = '' + selected.id
                 sdd.selectedArea = selected
                 sdd.drawAll()
@@ -170,7 +170,7 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
     }
     else if (didMouseMove) {
         // experimentar onMouseMove com o translate sem action para se conseguir ver o objeto a mover, mas não ser guardado como uma action para undo/redo
-        sdd.translate(selected, -deltaX / render.zoom, -deltaY / render.zoom)
+        sdd.translate(selected, deltaX / render.zoom, deltaY / render.zoom)
         //selected.translate(mx-rect.left-selected.x-(selected.centerX-selected.x), my-rect.top-selected.y-(selected.centerY-selected.y))
 
         sdd.drawAll()
@@ -400,6 +400,7 @@ modalSaveBtn.addEventListener('click', () => {
 let collabBtn: HTMLInputElement = document.getElementById('collabBtn') as HTMLInputElement;
 collabBtn.addEventListener('click', async () => {
     window.alert('Collab mode activated. Socket: ws://localhost:3000')
+    // sdd.communicator.start(sdd, '')
     await axios.post(SimpleDrawDocument.API_HOST + '/api/collab')
 })
 
