@@ -85,15 +85,10 @@ export class CanvasRender implements Render {
                     0, 0, 2 * Math.PI)
                 this.ctx.stroke()
             } else if (shape instanceof Rectangle) {
-                console.log("ZOOM " + this.zoom)
-                console.log("RECT X: " + shape.x + " Y: " + shape.y)
-                console.log("Rect x: " + getCoordWithZoom(shape.x, this.centerX, this.zoom) + " y: " + getCoordWithZoom(shape.y, this.centerY, this.zoom))
                 this.ctx.strokeStyle = shape.color
                 this.ctx.strokeRect(
                     getCoordWithZoom(shape.x, this.centerX, this.zoom),
                     getCoordWithZoom(shape.y, this.centerY, this.zoom),
-                    // getCoordWithZoom(200, this.centerX, this.zoom),
-                    // getCoordWithZoom(200, this.centerY, this.zoom),
                     shape.width * this.zoom,
                     shape.height * this.zoom
                 )
@@ -104,10 +99,6 @@ export class CanvasRender implements Render {
                 this.ctx.strokeRect(
                     getCoordWithZoom(shape.x, this.centerX, this.zoom),
                     getCoordWithZoom(shape.y, this.centerY, this.zoom),
-                    // getCoordWithZoom((shape.x + this.centerX*(this.zoom-1))/this.zoom, this.centerX, this.zoom),
-                    // getCoordWithZoom((shape.y + this.centerY*(this.zoom-1))/this.zoom, this.centerY, this.zoom),
-                    // getCoordWithZoom(shape.x, this.centerX, this.zoom),
-                    // getCoordWithZoom(200, this.centerY, this.zoom),
                     shape.width * this.zoom,
                     shape.height * this.zoom
                 )

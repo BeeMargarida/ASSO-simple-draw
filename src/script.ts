@@ -52,11 +52,12 @@ var areaSelected: boolean = false
 var selected: Shape;
 function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
     e.preventDefault()
+    e.stopPropagation()
     switch (e.which) {
         case 1:
             onMouseDownLeft(e, render, object)
             break;
-        case 2:
+        case 3:
             onMouseDownMiddle(e, render, object)
             break;
     }
@@ -116,7 +117,7 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
         case 1:
             onMouseUpLeft(e, render)
             break;
-        case 2:
+        case 3:
             onMouseUpMiddle(e, render)
             break;
     }
@@ -131,8 +132,6 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
     var deltaY = my - lastY
     var upperLeftX = (lastX < mx) ? (lastX - rect.left) : (mx - rect.left)
     var upperLeftY = (lastY < my) ? (lastY - rect.top) : (my - rect.top)
-    // var upperLeftX = ((lastX - rect.left) + deltaX / 2) - Math.abs(deltaX) / 2
-    // var upperLeftY = ((lastY - rect.top) + deltaY / 2) - Math.abs(deltaY) / 2
 
     var didMouseMove = (deltaX != 0 && deltaY != 0) ? true : false
 
