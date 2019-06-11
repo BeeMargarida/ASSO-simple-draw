@@ -96,8 +96,10 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
     var my = e.clientY
     var deltaX = mx - lastX
     var deltaY = my - lastY
-    var upperLeftX = ((lastX - rect.left) + deltaX / 2) - Math.abs(deltaX) / 2
-    var upperLeftY = ((lastY - rect.top) + deltaY / 2) - Math.abs(deltaY) / 2
+    var upperLeftX = (lastX < mx) ? (lastX - rect.left) : (mx - rect.left)
+    var upperLeftY = (lastY < my) ? (lastY - rect.top) : (my - rect.top)
+    // var upperLeftX = ((lastX - rect.left) + deltaX / 2) - Math.abs(deltaX) / 2
+    // var upperLeftY = ((lastY - rect.top) + deltaY / 2) - Math.abs(deltaY) / 2
 
     var didMouseMove = (deltaX != 0 && deltaY != 0) ? true : false
 
@@ -119,7 +121,9 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
 
             if (selectedShapes.length != 0) {
                 areaSelected = true
-                selected = new AreaSelected(sdd.getShapeId(), upperLeftX, upperLeftY, Math.abs(deltaX), Math.abs(deltaY), selectedShapes)
+                upperLeftX = (upperLeftX + render.centerX * (render.zoom - 1)) / render.zoom
+                upperLeftY = (upperLeftY + render.centerY * (render.zoom - 1)) / render.zoom
+                selected = new AreaSelected(sdd.getShapeId(), upperLeftX, upperLeftY, Math.abs(deltaX / render.zoom), Math.abs(deltaY / render.zoom), selectedShapes)
                 selectedLabel.innerHTML = '' + selected.id
                 sdd.selectedArea = selected
                 sdd.drawAll()
@@ -225,7 +229,7 @@ document.getElementById('new_circ').addEventListener('click', () => {
 })
 
 document.getElementById('delete_shape').addEventListener('click', () => {
-    if (selected){
+    if (selected) {
         sdd.deleteShape(selected)
         selected = null
         selectedLabel.innerHTML = 'none'
@@ -353,6 +357,7 @@ modalSaveBtn.addEventListener('click', () => {
 let collabBtn: HTMLInputElement = document.getElementById('collabBtn') as HTMLInputElement;
 collabBtn.addEventListener('click', async () => {
     window.alert('Collab mode activated. Socket: ws://localhost:3000')
+    // sdd.communicator.start(sdd, '')
     await axios.post(SimpleDrawDocument.API_HOST + '/api/collab')
 })
 

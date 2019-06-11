@@ -15,6 +15,7 @@ export class Communicator {
     start(sdd: SimpleDrawDocument, socket: string) {
         this.document = sdd
         this.webSocket = new WebSocket(socket)
+        // this.webSocket = new WebSocket('ws://localhost:3000')
 
         var self = this
         this.webSocket.onopen = function(event) {
