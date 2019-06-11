@@ -4,6 +4,7 @@ import { CanvasRender, SVGRender } from './render';
 import { getCoordWithZoom } from "./utils";
 import axios from 'axios';
 import { Shape, AreaSelected } from './shape';
+import { PeerCommunicator, Communicator } from './communication';
 
 var canvasrenderers: CanvasRender[] = []
 var svgrenderers: SVGRender[] = []
@@ -156,8 +157,8 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
 
             if (selectedShapes.length != 0) {
                 areaSelected = true
-                upperLeftX = (upperLeftX - render.centerX)/render.zoom + render.originalCenterX
-                upperLeftY = (upperLeftY - render.centerY)/render.zoom + render.originalCenterY
+                upperLeftX = (upperLeftX - render.centerX) / render.zoom + render.originalCenterX
+                upperLeftY = (upperLeftY - render.centerY) / render.zoom + render.originalCenterY
                 selected = new AreaSelected(sdd.getShapeId(), upperLeftX, upperLeftY, Math.abs(deltaX / render.zoom), Math.abs(deltaY / render.zoom), selectedShapes)
                 selectedLabel.innerHTML = '' + selected.id
                 sdd.selectedArea = selected
@@ -395,16 +396,17 @@ modalSaveBtn.addEventListener('click', () => {
 
 
 // CONNECTION
+var comm = new PeerCommunicator()
+
 let collabBtn: HTMLInputElement = document.getElementById('collabBtn') as HTMLInputElement;
 collabBtn.addEventListener('click', async () => {
-    window.alert('Collab mode activated. Socket: ws://localhost:3000')
-    // sdd.communicator.start(sdd, '')
-    await axios.post(SimpleDrawDocument.API_HOST + '/api/collab')
+    sdd.communicator.start(true, sdd)
 })
 
 let conBtn: HTMLInputElement = document.getElementById('conBtn') as HTMLInputElement;
 conBtn.addEventListener('click', () => {
-    var socket: string = window.prompt('Enter ws url:')
-    if (socket != '')
-        sdd.communicator.start(sdd, socket)
+    var peer: string = window.prompt('Enter peer id:')
+    if (!sdd.communicator.running)
+        sdd.communicator.start(false, sdd)
+    sdd.communicator.peer.signal(peer)
 })

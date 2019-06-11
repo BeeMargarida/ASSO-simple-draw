@@ -50,3 +50,42 @@ export class Communicator {
     }
     
 }
+
+export class PeerCommunicator {
+    peer: any
+    public running: boolean = false
+    document: SimpleDrawDocument
+
+    start(initiator: boolean, document: SimpleDrawDocument) {
+        this.document = document
+        var Peer = require('simple-peer')
+        this.peer = new Peer({
+            initiator: initiator,
+            trickle: false
+        })
+
+        this.running = true
+
+        this.peer.on('signal', (data: string) => this.signal(data))
+        this.peer.on('data', (data: string) => this.receive(data))
+    }
+
+    signal(data: string) {
+        console.log('signal')
+        console.log(JSON.stringify(data))
+        window.alert('Collab mode activated. Your id: \n' + JSON.stringify(data))
+    }
+
+    receive(data: string){
+        console.log('RECEIVED');
+        console.log(data.toString())
+        this.document.receiveAction(data);
+    }
+
+    send(data: string){
+        console.log('SENT');
+        console.log(data);
+        this.peer.send(data)
+        
+    }
+}

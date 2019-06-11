@@ -5,7 +5,7 @@ import { FileManager, FileManagerFactory } from './file-manager';
 import { UndoManager } from "./undo";
 import axios from 'axios';
 import { deflateRaw } from 'zlib';
-import { Communicator } from './communication';
+import { Communicator, PeerCommunicator } from './communication';
 import { isRegExp } from 'util';
 
 export class SimpleDrawDocument {
@@ -19,7 +19,7 @@ export class SimpleDrawDocument {
   undoManager = new UndoManager()
   selectedArea: Shape = null
   workingFilePath: string = null
-  communicator: Communicator = new Communicator()
+  communicator: PeerCommunicator = new PeerCommunicator()
   currentId: number
 
   constructor() {
