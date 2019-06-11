@@ -156,10 +156,8 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
 
             if (selectedShapes.length != 0) {
                 areaSelected = true
-                // upperLeftX = (upperLeftX + render.centerX * (render.zoom - 1)) / render.zoom
-                // upperLeftY = (upperLeftY + render.centerY * (render.zoom - 1)) / render.zoom
-                upperLeftX = (upperLeftX-3*render.centerX+2*render.originalCenterX)/render.zoom + 2*render.centerX - render.originalCenterX
-                upperLeftY = (upperLeftY-3*render.centerY+2*render.originalCenterY)/render.zoom + 2*render.centerY - render.originalCenterY
+                upperLeftX = (upperLeftX - render.centerX)/render.zoom + render.originalCenterX
+                upperLeftY = (upperLeftY - render.centerY)/render.zoom + render.originalCenterY
                 selected = new AreaSelected(sdd.getShapeId(), upperLeftX, upperLeftY, Math.abs(deltaX / render.zoom), Math.abs(deltaY / render.zoom), selectedShapes)
                 selectedLabel.innerHTML = '' + selected.id
                 sdd.selectedArea = selected
@@ -171,9 +169,7 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
         }
     }
     else if (didMouseMove) {
-        // experimentar onMouseMove com o translate sem action para se conseguir ver o objeto a mover, mas não ser guardado como uma action para undo/redo
         sdd.translate(selected, deltaX / render.zoom, deltaY / render.zoom)
-        //selected.translate(mx-rect.left-selected.x-(selected.centerX-selected.x), my-rect.top-selected.y-(selected.centerY-selected.y))
 
         sdd.drawAll()
     }

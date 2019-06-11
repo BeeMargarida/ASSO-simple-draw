@@ -92,15 +92,7 @@ export class CanvasRender implements Render {
                     shape.radius * this.zoom,
                     0, 0, 2 * Math.PI)
                 this.ctx.stroke()
-            } else if (shape instanceof Rectangle) {
-                this.ctx.strokeStyle = shape.color
-                this.ctx.strokeRect(
-                    getCoordWithZoom(shape.x, this.originalCenterX, this.centerX, this.zoom),
-                    getCoordWithZoom(shape.y, this.originalCenterY, this.centerY, this.zoom),
-                    shape.width * this.zoom,
-                    shape.height * this.zoom
-                )
-            } else if (shape instanceof AreaSelected) {
+            } else if (shape instanceof Rectangle || shape instanceof AreaSelected) {
                 this.ctx.strokeStyle = shape.color
                 this.ctx.strokeRect(
                     getCoordWithZoom(shape.x, this.originalCenterX, this.centerX, this.zoom),
