@@ -48,15 +48,15 @@ export class SimpleDrawDocument {
   }
 
   draw(render: Render): void {
-    if(this.layers.length == 0)
+    if (this.layers.length == 0)
       this.layers.push(new Array<Shape>())
-    
-      var objs = new Array<Shape>()
+
+    var objs = new Array<Shape>()
+    objs.push(...this.layers[this.selectedLayer])
     this.layers.forEach((objects, idx) => {
-      if (objects.length != 0 || idx == this.selectedLayer)
+      if (objects.length != 0 && idx != this.selectedLayer)
         objs.push(...objects)
     });
-    objs.push(...this.layers[this.selectedLayer])
 
     if (this.selectedArea !== null) objs.push(this.selectedArea)
 
@@ -74,9 +74,9 @@ export class SimpleDrawDocument {
 
   deleteShape(selected: Shape): Shape {
     let action
-    if (selected instanceof AreaSelected){
+    if (selected instanceof AreaSelected) {
       let ids = []
-      for(const s of selected.selectedShapes)
+      for (const s of selected.selectedShapes)
         ids.push(s.id)
       action = new DeleteShapeAction(this, ids, this.selectedLayer)
     }
@@ -117,7 +117,7 @@ export class SimpleDrawDocument {
     this.layers.forEach((objects) => {
       objects.forEach(shape => {
         const action = new TranslateAction(this, shape, xd, yd)
-        this.communicator.send(action.serialize())  
+        this.communicator.send(action.serialize())
         this.do(action)
       });
     });
