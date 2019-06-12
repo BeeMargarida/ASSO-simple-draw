@@ -59,6 +59,9 @@ To support viewport tools, we use mouse events, such as the scroll event to zoom
 #### Different view styles per viewport
 To make the styling possible we used the **Strategy Pattern**, where each render has a *Style*. We also used the **State Pattern** to change the style when the user clicks in the *Color/Stroke* button. We currently have 2 styles: *Wireframe* and *Color*. However, it is easy to expand and add more: create 2 classes (one for SVG and other for Canvas) that implement the interface *Style*, and the method *draw* is the one responsible for implementing the drawing logic. 
 There was also a possibility of doing this with the *Decorator Pattern*, however we didn't want to implement one or more styles at the same time and we wanted to be able to change styles at runtime.
+Below we can see the *Style* interface and an implemention of the Color mode for Canvas as well as the functionality in action:
+![ViewStyles Code](./prints/styles.png)
+![ViewStyles](./prints/styles_imp.png)
 
 #### Two interaction modes: *point-n-click* and *REPLs*
 TODO Bruno
