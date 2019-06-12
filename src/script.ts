@@ -1,10 +1,11 @@
 import { SimpleDrawDocument } from './document'
 import { Interpreter } from './interpreter';
-import { CanvasRender, SVGRender } from './render';
+import { CanvasRender, SVGRender, ColorCanvasRender } from './render';
 import { getCoordWithZoom } from "./utils";
 import axios from 'axios';
 import { Shape, AreaSelected } from './shape';
 import { PeerCommunicator, Communicator } from './communication';
+import { WireframeCanvasRender, ColorSVGRender, WireframeSVGRender } from 'styles';
 
 var canvasrenderers: CanvasRender[] = []
 var svgrenderers: SVGRender[] = []
@@ -194,12 +195,25 @@ function addMouseUpListener(render: CanvasRender | SVGRender, object: HTMLCanvas
 
 function createCanvas(width: number) {
     var drawSpace = document.getElementById('draw_space')
+    var drawSpaceList = document.getElementById("draw-list-canvas")
     var newCanvas = document.createElement('canvas')
     newCanvas.width = width
     newCanvas.height = drawSpace.clientHeight * 0.95
-    newCanvas.id = 'canvas'
+    newCanvas.id = `canvas-${canvasrenderers.length}`
     newCanvas.style.border = "1px solid red"
     drawSpace.appendChild(newCanvas)
+    
+    var newItemDiv = document.createElement("div")
+    var newItem = document.createElement("p")
+    newItem.innerText = `Canvas ${canvasrenderers.length}`
+    var canvasButton = document.createElement("button")
+    canvasButton.innerText = "Color"
+    canvasButton.id = `button-canvas-${canvasrenderers.length}`
+    canvasButton.addEventListener('click', (e) => activateColorCanvas(e, canvasrenderers.length))
+    newItemDiv.appendChild(newItem)
+    newItemDiv.appendChild(canvasButton)
+    drawSpaceList.appendChild(newItemDiv)
+
     var render = new CanvasRender(newCanvas)
     sdd.canvasrenderers.push(render)
     addZoomListener(render, newCanvas)
@@ -226,6 +240,7 @@ document.getElementById('new_canvas').addEventListener('click', () => {
 
 function createSVG(width: number) {
     var drawSpace = document.getElementById('draw_space')
+    var drawSpaceList = document.getElementById("draw-list-svg")
     var newSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
     newSvg.setAttribute('width', (width).toString())
     newSvg.setAttribute('height', (drawSpace.clientHeight * 0.95).toString())
@@ -235,6 +250,18 @@ function createSVG(width: number) {
     newSvg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
     newSvg.style.border = "1px solid blue"
     drawSpace.appendChild(newSvg)
+
+    var newItemDiv = document.createElement("div")
+    var newItem = document.createElement("p")
+    newItem.innerText = `SVG ${svgrenderers.length}`
+    var svgButton = document.createElement("button")
+    svgButton.innerText = "Color"
+    svgButton.id = `button-canvas-${svgrenderers.length}`
+    svgButton.addEventListener('click', (e) => activateColorSVG(e, svgrenderers.length))
+    newItemDiv.appendChild(newItem)
+    newItemDiv.appendChild(svgButton)
+    drawSpaceList.appendChild(newItemDiv)
+
     var render = new SVGRender(newSvg)
     sdd.svgrenderers.push(render)
     addZoomListener(render, newSvg)
@@ -291,6 +318,47 @@ document.getElementById('redo').addEventListener('click', () => {
     sdd.redo()
     sdd.drawAll()
 })
+
+
+// VIEW STYLES
+function activateColorCanvas(evt: Event, id: number): void {
+    evt.preventDefault()
+    let button = document.getElementById(`button-canvas-${id}`)
+    let canvas = document.getElementById(`canvas-${id}`)
+    if(button == null || canvas == null){
+        console.log("Canvas or Button not found")
+        return
+    }
+    if(button.innerText == "Color"){
+        // Activate Color Style
+        button.innerText = "Stroke"
+        canvasrenderers[id].setStyle(new ColorCanvasRender())
+    }
+    else {
+        button.innerText = "Color"
+        canvasrenderers[id].setStyle(new WireframeCanvasRender())
+    }
+}
+
+function activateColorSVG(evt: Event, id: number): void {
+    evt.preventDefault()
+    let button = document.getElementById(`button-svg-${id}`)
+    let svg = document.getElementById(`svg-${id}`)
+    if(button == null || svg == null){
+        console.log("Canvas or Button not found")
+        return
+    }
+    if(button.innerText == "Color"){
+        // Activate Color Style
+        button.innerText = "Stroke"
+        svgrenderers[id].setStyle(new ColorSVGRender())
+    }
+    else {
+        button.innerText = "Color"
+        svgrenderers[id].setStyle(new WireframeSVGRender())
+    }
+}
+
 
 
 // LAYER
