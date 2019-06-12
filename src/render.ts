@@ -25,7 +25,7 @@ export class SVGRender implements Render {
         this.centerX = parseInt(this.svg.getAttribute("width")) / 2
         this.centerY = parseInt(this.svg.getAttribute("height")) / 2
         this.zoom = 1
-        this.style = new WireframeCanvasRender()
+        this.style = new WireframeSVGRender()
     }
 
     draw(...objs: Array<Shape>): void {
@@ -67,13 +67,13 @@ export class CanvasRender implements Render {
         this.zoom = 1
         this.style = new WireframeCanvasRender()
     }
-
-    setStyle(style: Style): void {
-        this.style = style
-    }
-
+    
     draw(...objs: Array<Shape>): void {
         this.style.draw(this, ...objs)
+    }
+    
+    setStyle(style: Style): void {
+        this.style = style
     }
 
     applyZoom(val: number): void {

@@ -83,6 +83,8 @@ export class PeerCommunicator {
     }
 
     send(data: string){
+        if(!this.peer)
+            return
         console.log('SENT');
         console.log(data);
         this.peer.send(data)

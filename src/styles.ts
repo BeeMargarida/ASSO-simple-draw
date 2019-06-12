@@ -14,7 +14,7 @@ export class ColorCanvasRender implements Style {
         for (const shape of objs) {
             if (shape instanceof Circle) {
                 render.ctx.beginPath()
-                render.ctx.strokeStyle = shape.color
+                render.ctx.fillStyle = shape.color
                 render.ctx.ellipse(
                     getCoordWithZoom(shape.x, render.originalCenterX, render.centerX, render.zoom),
                     getCoordWithZoom(shape.y, render.originalCenterY, render.centerY, render.zoom),
@@ -22,9 +22,18 @@ export class ColorCanvasRender implements Style {
                     shape.radius * render.zoom,
                     0, 0, 2 * Math.PI)
                 render.ctx.fill()
-            } else if (shape instanceof Rectangle || shape instanceof AreaSelected) {
-                render.ctx.strokeStyle = shape.color
+            } else if (shape instanceof Rectangle) {
+                render.ctx.fillStyle = shape.color
                 render.ctx.fillRect(
+                    getCoordWithZoom(shape.x, render.originalCenterX, render.centerX, render.zoom),
+                    getCoordWithZoom(shape.y, render.originalCenterY, render.centerY, render.zoom),
+                    shape.width * render.zoom,
+                    shape.height * render.zoom
+                )
+            }
+            else if (shape instanceof AreaSelected) {
+                render.ctx.strokeStyle = shape.color
+                render.ctx.strokeRect(
                     getCoordWithZoom(shape.x, render.originalCenterX, render.centerX, render.zoom),
                     getCoordWithZoom(shape.y, render.originalCenterY, render.centerY, render.zoom),
                     shape.width * render.zoom,
@@ -72,7 +81,7 @@ export class ColorSVGRender implements Style {
         for (const shape of objs) {
             if (shape instanceof Rectangle || shape instanceof AreaSelected) {
                 const e = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-                e.setAttribute('style', 'fill: ' + shape.color + '; stroke: none')
+                shape instanceof AreaSelected ? e.setAttribute('style', 'stroke: ' + shape.color + '; fill: none') : e.setAttribute('style', 'fill: ' + shape.color + '; stroke: none')
                 e.setAttribute('x', (getCoordWithZoom(shape.x, render.originalCenterX, render.centerX, render.zoom)).toString())
                 e.setAttribute('y', (getCoordWithZoom(shape.y, render.originalCenterY, render.centerY, render.zoom)).toString())
                 e.setAttribute('width', (shape.width * render.zoom).toString())

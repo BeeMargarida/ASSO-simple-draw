@@ -15,16 +15,16 @@ Develop a graphical editor to draw basic geometric objects, manipulate and persi
 * [x] SimpleDraw is based on the notion of documents
 * [x] Documents are rendered either in SVG or HTMLCanvas
 * [x] Support persistence in multiple formats: TXT, XML, BIN
-* [x] Extendible with different objects (triangles, arrows, etc)
+* [ ] Extendible with different objects (triangles, arrows, etc)
 * [x] Extendible with new tools (rotate, translate shapes)
 * [x] Support area selections
 * [x] Support layers of objects
 * [x] Multiple views of the same model in the screen
 * [x] Viewport tools (translate, zoom on the viewport)
-* [ ] Different view styles per viewport (wireframe, color)
+* [x] Different view styles per viewport (wireframe, color)
 * [x] Two interaction modes: *point-n-click* and *REPLs*
 * [x] Support (un)limited Undo/Redo of all operations
-* [x] **OP MODE** Collaborate using multiple browsers and no backend/server
+* [ ] **OP MODE** Collaborate using multiple browsers and no backend/server
 
 ## Problems 
 
@@ -46,7 +46,7 @@ The system allows the user to temporarily select an area that can contain severa
 With this, it is possible to do shape actions, like translate, and the class AreaSelected specifies this action for itself. This allows the selection to be modular and iterate above the Shape class.
 
 #### Support layers of objects
-TODO Guida
+SimpleDraw as the functionality of creating and deleting layers. These layers allow to create objects that are independent from objects in other layers. These makes it easy to only make actions of the selected layer. Besides this, it allows for the deletion of several objects at once, by deleting their layer.
 
 #### Multiple views of the same model in the screen
 The system should allow the user to create new views in run time and still have all objects that were created before and all operations that have happened.
@@ -57,7 +57,8 @@ This approach consists of a **MVC** application, in which the Shape class is the
 To support viewport tools, we use mouse events, such as the scroll event to zoom in or zoom out on the scene, or the click and drag (mousedown + mouseup with different coordinates) to translate the whole scene. This problem takes advantage of the previous one (**Multiple views of the same model in the screen**), in the sense that it only applies the viewport tool to the viewport where the mouse is, not affecting the others.
 
 #### Different view styles per viewport
-To support different styles per viewport, we must ensure that the viewports are completely independent on the view component of the **MVC**, so that if a user changes the style of one viewport and currently has multiple viewports, only that viewport must change. This is ensured by the solution for the problem **Multiple views of the same model in the screen**, since the views are completely independent from the models and controllers, and the multiple views are independent from each other. So, the way we implemented the system allows for customization of one viewport without affecting others.
+To make the styling possible we used the **Strategy Pattern**, where each render has a *Style*. We also used the **State Pattern** to change the style when the user clicks in the *Color/Stroke* button. We currently have 2 styles: *Wireframe* and *Color*. However, it is easy to expand and add more: create 2 classes (one for SVG and other for Canvas) that implement the interface *Style*, and the method *draw* is the one responsible for implementing the drawing logic. 
+There was also a possibility of doing this with the *Decorator Pattern*, however we didn't want to implement one or more styles at the same time and we wanted to be able to change styles at runtime.
 
 #### Two interaction modes: *point-n-click* and *REPLs*
 TODO Bruno
