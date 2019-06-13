@@ -3,6 +3,7 @@ import { Interpreter } from './interpreter';
 import { CanvasRender, SVGRender } from './render';
 import { Shape, AreaSelected } from './shape';
 import { PeerCommunicator } from './communication';
+import { ColorCanvasRender, WireframeCanvasRender, ColorSVGRender, WireframeSVGRender } from './styles';
 
 var canvasrenderers: CanvasRender[] = []
 var svgrenderers: SVGRender[] = []
@@ -57,16 +58,15 @@ function onMouseDown(e: any, render: CanvasRender | SVGRender, object: HTMLCanva
             onMouseDownLeft(e, render, object)
             break;
         case 3:
-            onMouseDownMiddle(e, render, object)
+            onMouseDownRight(e, render, object)
             break;
     }
 }
 
 function onMouseDownLeft(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
-    var rect = e.target.getBoundingClientRect()
+    var rect = object.getBoundingClientRect()
     var mx = e.clientX
     var my = e.clientY
-    console.log("RX: " + mx + " RY: " + my)
     lastX = mx
     lastY = my
 
@@ -99,7 +99,7 @@ function onMouseDownLeft(e: any, render: CanvasRender | SVGRender, object: HTMLC
     }
 }
 
-function onMouseDownMiddle(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
+function onMouseDownRight(e: any, render: CanvasRender | SVGRender, object: HTMLCanvasElement | SVGSVGElement) {
     var rect = e.target.getBoundingClientRect()
     var mx = e.clientX
     var my = e.clientY
@@ -118,7 +118,7 @@ function onMouseUp(e: any, render: CanvasRender | SVGRender) {
             onMouseUpLeft(e, render)
             break;
         case 3:
-            onMouseUpMiddle(e, render)
+            onMouseUpRight(e, render)
             break;
     }
 
@@ -145,7 +145,6 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
             // Get all selected shapes
             for (var x of sdd.layers[sdd.selectedLayer]) {
                 if (x.checkIfBetween(upperLeftX, upperLeftY, Math.abs(deltaX), Math.abs(deltaY), render)) {
-                    console.log(x)
                     x.color = 'red'
                     selectedShapes.push(x)
                 } else {
@@ -174,7 +173,7 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
     }
 }
 
-function onMouseUpMiddle(e: any, render: CanvasRender | SVGRender) {
+function onMouseUpRight(e: any, render: CanvasRender | SVGRender) {
     var rect = e.target.getBoundingClientRect()
 
     var mx = e.clientX
@@ -192,12 +191,29 @@ function addMouseUpListener(render: CanvasRender | SVGRender, object: HTMLCanvas
 
 function createCanvas(width: number) {
     var drawSpace = document.getElementById('draw_space')
+    var drawSpaceList = document.getElementById("draw-list-canvas")
     var newCanvas = document.createElement('canvas')
     newCanvas.width = width
     newCanvas.height = drawSpace.clientHeight * 0.95
-    newCanvas.id = 'canvas'
+    newCanvas.id = `canvas-${sdd.canvasrenderers.length}`
     newCanvas.style.border = "1px solid red"
     drawSpace.appendChild(newCanvas)
+
+    let currentId = sdd.canvasrenderers.length
+    var newItemDiv = document.createElement("div")
+    newItemDiv.style.margin = "5px 0 5px 10px"
+    var newItem = document.createElement("span")
+    newItem.innerText = `Canvas ${currentId}`
+    var canvasButton = document.createElement("button")
+    canvasButton.innerText = "Color"
+    canvasButton.id = `button-canvas-${currentId}`
+    canvasButton.className = "btn btn-info ml-2"
+    canvasButton.style.display = "inline"
+    canvasButton.addEventListener('click', (e) => activateColorCanvas(e, currentId))
+    newItemDiv.appendChild(newItem)
+    newItemDiv.appendChild(canvasButton)
+    drawSpaceList.appendChild(newItemDiv)
+
     var render = new CanvasRender(newCanvas)
     sdd.canvasrenderers.push(render)
     addZoomListener(render, newCanvas)
@@ -224,15 +240,32 @@ document.getElementById('new_canvas').addEventListener('click', () => {
 
 function createSVG(width: number) {
     var drawSpace = document.getElementById('draw_space')
+    var drawSpaceList = document.getElementById("draw-list-svg")
     var newSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
     newSvg.setAttribute('width', (width).toString())
     newSvg.setAttribute('height', (drawSpace.clientHeight * 0.95).toString())
     newSvg.style.verticalAlign = 'top'
     newSvg.setAttribute('version', '1.1')
-    newSvg.id = 'svgcanvas'
+    newSvg.id = `svgcanvas-${sdd.svgrenderers.length}`
     newSvg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
     newSvg.style.border = "1px solid blue"
     drawSpace.appendChild(newSvg)
+
+    let currentId = sdd.svgrenderers.length
+    var newItemDiv = document.createElement("div")
+    newItemDiv.style.margin = "5px 0 5px 10px"
+    var newItem = document.createElement("span")
+    newItem.innerText = `SVG ${currentId}`
+    var svgButton = document.createElement("button")
+    svgButton.innerText = "Color"
+    svgButton.id = `button-svg-${currentId}`
+    svgButton.className = "btn btn-info ml-2"
+    svgButton.style.display = "inline"
+    svgButton.addEventListener('click', (e) => activateColorSVG(e, currentId))
+    newItemDiv.appendChild(newItem)
+    newItemDiv.appendChild(svgButton)
+    drawSpaceList.appendChild(newItemDiv)
+
     var render = new SVGRender(newSvg)
     sdd.svgrenderers.push(render)
     addZoomListener(render, newSvg)
@@ -289,6 +322,49 @@ document.getElementById('redo').addEventListener('click', () => {
     sdd.redo()
     sdd.drawAll()
 })
+
+
+// VIEW STYLES
+function activateColorCanvas(evt: Event, id: number): void {
+    evt.preventDefault()
+    let button = document.getElementById(`button-canvas-${id}`)
+    let canvas = document.getElementById(`canvas-${id}`)
+    if (button == null || canvas == null) {
+        console.log("Canvas or Button not found")
+        return
+    }
+    if (button.innerText == "Color") {
+        // Activate Color Style
+        button.innerText = "Stroke"
+        sdd.canvasrenderers[id].setStyle(new ColorCanvasRender())
+    }
+    else {
+        button.innerText = "Color"
+        sdd.canvasrenderers[id].setStyle(new WireframeCanvasRender())
+    }
+    sdd.drawAll()
+}
+
+function activateColorSVG(evt: Event, id: number): void {
+    evt.preventDefault()
+    let button = document.getElementById(`button-svg-${id}`)
+    let svg = document.getElementById(`svgcanvas-${id}`)
+    if (button == null || svg == null) {
+        console.log("Canvas or Button not found")
+        return
+    }
+    if (button.innerText == "Color") {
+        // Activate Color Style
+        button.innerText = "Stroke"
+        sdd.svgrenderers[id].setStyle(new ColorSVGRender())
+    }
+    else {
+        button.innerText = "Color"
+        sdd.svgrenderers[id].setStyle(new WireframeSVGRender())
+    }
+    sdd.drawAll()
+}
+
 
 
 // LAYER

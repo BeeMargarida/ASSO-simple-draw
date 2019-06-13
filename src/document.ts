@@ -49,11 +49,11 @@ export class SimpleDrawDocument {
       this.layers.push(new Array<Shape>())
 
     var objs = new Array<Shape>()
-    objs.push(...this.layers[this.selectedLayer])
     this.layers.forEach((objects, idx) => {
       if (objects.length != 0 && idx != this.selectedLayer)
-        objs.push(...objects)
+      objs.push(...objects)
     });
+    objs.push(...this.layers[this.selectedLayer])
 
     if (this.selectedArea !== null) objs.push(this.selectedArea)
 

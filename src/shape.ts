@@ -90,7 +90,6 @@ export class AreaSelected extends Shape {
         super(id, x, y)
         this.centerX = x + width / 2
         this.centerY = y + height / 2
-        console.log("AREA SELECTED CENTER: " + this.centerX + " : " + this.centerY)
         this.color = 'yellow'
         this.selectedShapes = shapes
     }
