@@ -17,6 +17,7 @@ export abstract class Shape {
 
     abstract checkIfHit(mx: number, my: number, render: CanvasRender | SVGRender): boolean
     abstract checkIfBetween(startX: number, startY: number, width: number, height: number, render: CanvasRender | SVGRender): boolean
+    abstract toString(): string
 }
 
 export class Rectangle extends Shape {
@@ -49,6 +50,10 @@ export class Rectangle extends Shape {
             return true
         return false
     }
+
+    toString(): string {
+        return 'Rectangle ' + this.id + ' ' + this.x + ' ' + this.y + ' ' + this.width + ' ' + this.height
+    }
 }
 
 export class Circle extends Shape {
@@ -80,6 +85,10 @@ export class Circle extends Shape {
         if (startX <= sx && sx <= lastX && startY <= sy && sy <= lastY)
             return true
         return false
+    }
+
+    toString(): string {
+        return 'Circle ' + this.id + ' ' + this.x + ' ' + this.y + ' ' + this.radius
     }
 }
 
@@ -119,5 +128,9 @@ export class AreaSelected extends Shape {
         if (startX <= sx && (sx + this.width * render.zoom) <= lastX && startY <= sy && (sy + this.height * render.zoom) <= lastY)
             return true
         return false
+    }
+
+    toString(): string {
+        return 'Area Selected'
     }
 }

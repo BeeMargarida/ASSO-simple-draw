@@ -1,4 +1,4 @@
-import { Shape, AreaSelected } from './shape'
+import { Shape, AreaSelected, Rectangle, Circle } from './shape'
 import { Action, CreateCircleAction, CreateRectangleAction, TranslateAction, DeleteShapeAction } from './actions'
 import { Render, CanvasRender, SVGRender } from './render';
 import { FileManagerFactory } from './file-manager';
@@ -51,7 +51,7 @@ export class SimpleDrawDocument {
     var objs = new Array<Shape>()
     this.layers.forEach((objects, idx) => {
       if (objects.length != 0 && idx != this.selectedLayer)
-      objs.push(...objects)
+        objs.push(...objects)
     });
     objs.push(...this.layers[this.selectedLayer])
 
@@ -219,6 +219,30 @@ export class SimpleDrawDocument {
     this.workingFilePath = fileName;
   }
 
+  receiveState(action: string) {
+    const layers = JSON.parse(action).layers
+
+    let first = 0
+    for (const layer of layers) {
+      if (first != 0) {
+        this.addLayer()
+        this.nextLayer(null)
+      }
+      for (const shape of layer) {
+        const type = shape.split(' ')[0]
+        const id = parseInt(shape.split(' ')[1])
+        const x = parseInt(shape.split(' ')[2])
+        const y = parseInt(shape.split(' ')[3])
+        if (type === 'Rectangle')
+          this.add(new Rectangle(id, x, y, parseInt(shape.split(' ')[4]), parseInt(shape.split(' ')[5])))
+        else if (type === 'Circle')
+          this.add(new Circle(id, x, y, parseInt(shape.split(' ')[4])))
+      }
+      if (first === 0)
+        first = 1
+    }
+  }
+
   receiveAction(action: string) {
     const a = JSON.parse(action)
     const type = a.type
@@ -231,12 +255,10 @@ export class SimpleDrawDocument {
         const act = new CreateCircleAction(this, id, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10))
         this.undoManager.onActionDone(act);
         this.do(act)
-        this.drawAll()
       } else if (shape === 'rectangle') {
         const act = new CreateRectangleAction(this, id, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10), parseInt(coords[3], 10))
         this.undoManager.onActionDone(act);
         this.do(act)
-        this.drawAll()
       }
     } else if (type === 'translate') {
       const id = a.id
@@ -248,7 +270,6 @@ export class SimpleDrawDocument {
               const act = new TranslateAction(this, s, parseInt(coords[0], 10), parseInt(coords[1], 10))
               this.undoManager.onActionDone(act);
               this.do(act)
-              this.drawAll()
             }
       }
     } else if (type === 'delete') {
@@ -256,13 +277,13 @@ export class SimpleDrawDocument {
       const act = new DeleteShapeAction(this, shape, layer)
       this.undoManager.onActionDone(act)
       this.do(act)
-      this.drawAll()
     } else if (type === 'undo') {
       this.undoManager.undo();
-      this.drawAll()
     } else if (type === 'redo') {
       this.undoManager.redo();
-      this.drawAll()
+    } else if (type === 'state') {
+      this.receiveState(action)
     }
+    this.drawAll()
   }
 }

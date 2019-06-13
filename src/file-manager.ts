@@ -1,5 +1,4 @@
 import { Shape, Circle, Rectangle } from "./shape"
-import { getCoordWithZoom } from "./utils";
 
 export class FileManagerFactory {
 

@@ -1,4 +1,5 @@
-import { SimpleDrawDocument } from "document";
+import { SimpleDrawDocument } from "./document";
+import { Rectangle, Circle } from "./shape";
 
 //ligar sockets a mandar mensagens random entre 2 browsers
 //fazer serialize das actions DONE
@@ -18,22 +19,22 @@ export class Communicator {
         // this.webSocket = new WebSocket('ws://localhost:3000')
 
         var self = this
-        this.webSocket.onopen = function(event) {
+        this.webSocket.onopen = function (event) {
             console.log("On open")
             self.isConnected = true
         }
 
-        this.webSocket.onmessage = function(event) {
+        this.webSocket.onmessage = function (event) {
             console.log("On message")
-            if(event.data.split(' ')[0] == 'connected')
+            if (event.data.split(' ')[0] == 'connected')
                 self.id = parseInt(event.data.split(' ')[1])
-            else{
-                if(event.data.split(' ')[0] != self.id)
+            else {
+                if (event.data.split(' ')[0] != self.id)
                     self.receive('{' + event.data.split(' {')[1])
             }
         }
 
-        this.webSocket.onclose = function(event) {
+        this.webSocket.onclose = function (event) {
             console.log("On close")
             console.log(event)
             self.isConnected = false
@@ -41,14 +42,14 @@ export class Communicator {
     }
 
     send(data: string) {
-        if(this.webSocket != null && this.isConnected)
+        if (this.webSocket != null && this.isConnected)
             this.webSocket.send(this.id + ' ' + data)
     }
 
     receive(data: string) {
         this.document.receiveAction(data);
     }
-    
+
 }
 
 export class PeerCommunicator {
@@ -73,21 +74,43 @@ export class PeerCommunicator {
     signal(data: string) {
         console.log('signal')
         console.log(JSON.stringify(data))
-        window.alert('Collab mode activated. Your id: \n' + JSON.stringify(data))
+        //window.alert('Collab mode activated. Your id: \n' + JSON.stringify(data))
     }
 
-    receive(data: string){
+    receive(data: string) {
         console.log('RECEIVED');
         console.log(data.toString())
-        this.document.receiveAction(data);
+        this.document.receiveAction(data.toString());
     }
 
-    send(data: string){
-        if(!this.peer)
+    send(data: string) {
+        if (!this.peer)
             return
         console.log('SENT');
         console.log(data);
         this.peer.send(data)
-        
+    }
+
+    sendState() {
+        if (!this.peer)
+            return
+
+        let layers = []
+        for (const layer of this.document.layers) {
+            let shapes = []
+            for (const shape of layer) {
+                if (shape instanceof Rectangle) {
+                    shapes.push(shape.toString())
+                } else if (shape instanceof Circle) {
+                    shapes.push(shape.toString())
+                }
+            }
+            layers.push(shapes)
+        }
+        let msg = {
+            type: 'state',
+            layers: layers
+        }
+        this.send(JSON.stringify(msg))
     }
 }
