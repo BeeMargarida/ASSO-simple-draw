@@ -1,10 +1,8 @@
 import { SimpleDrawDocument } from './document'
 import { Interpreter } from './interpreter';
 import { CanvasRender, SVGRender } from './render';
-import { getCoordWithZoom } from "./utils";
-import axios from 'axios';
 import { Shape, AreaSelected } from './shape';
-import { PeerCommunicator, Communicator } from './communication';
+import { PeerCommunicator } from './communication';
 
 var canvasrenderers: CanvasRender[] = []
 var svgrenderers: SVGRender[] = []

@@ -1,17 +1,14 @@
 import { Shape, AreaSelected } from './shape'
 import { Action, CreateCircleAction, CreateRectangleAction, TranslateAction, DeleteShapeAction } from './actions'
 import { Render, CanvasRender, SVGRender } from './render';
-import { FileManager, FileManagerFactory } from './file-manager';
+import { FileManagerFactory } from './file-manager';
 import { UndoManager } from "./undo";
 import axios from 'axios';
-import { deflateRaw } from 'zlib';
-import { Communicator, PeerCommunicator } from './communication';
-import { isRegExp } from 'util';
+import { PeerCommunicator } from './communication';
 
 export class SimpleDrawDocument {
   static API_HOST = 'http://localhost:3000';
 
-  //objects = new Array<Shape>()
   canvasrenderers: CanvasRender[] = []
   svgrenderers: SVGRender[] = []
   layers = new Array<Array<Shape>>()
