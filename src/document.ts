@@ -83,6 +83,12 @@ export class SimpleDrawDocument {
     return this.do(action)
   }
 
+  deleteById(id: number){
+    const action = new DeleteShapeAction(this, [id], -1)
+    this.communicator.send(action.serialize())
+    return this.do(action)
+  }
+
   delete(selected: Shape): void {
     for (const l of this.layers)
       for (let s = 0; s < l.length; s++)

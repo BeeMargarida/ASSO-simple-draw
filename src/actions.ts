@@ -32,11 +32,21 @@ export class DeleteShapeAction<S extends Shape> implements Action<S> {
 
     do(): S {
         for(const s of this.shapeIds){
-            for(const layer of this.doc.layers){
-                for(const shape of layer){
+            if(this.layer > -1)
+                for(const shape of this.doc.layers[this.layer]){
                     if(shape.id == s){
                         this.shapes.push(shape)
                         this.doc.delete(shape)
+                    }
+                }
+            else{
+                for(const [layerIdx,layer] of this.doc.layers.entries()){
+                    for(const shape of layer){
+                        if(shape.id == s){
+                            this.layer = layerIdx;
+                            this.shapes.push(shape)
+                            this.doc.delete(shape)
+                        }
                     }
                 }
             }

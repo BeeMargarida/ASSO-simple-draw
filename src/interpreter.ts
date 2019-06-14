@@ -9,6 +9,7 @@ export class Interpreter {
 		'rectangle': /^rectangle$/i,
 		'translate': /^translate$/i,
 		'rotate': /^rotate$/i,
+		'delete': /^delete$/i,
 	};
 
 	ignoredChars: Array<string> = [
@@ -103,6 +104,10 @@ class ExpressionFactory {
 				return new TranslateExpression();
 				break;
 
+			case 'delete':
+				return new DeleteExpression();
+				break;
+
 			default:
 				throw "Unknown expression at \"" + token + "\".";
 		}
@@ -116,20 +121,27 @@ class Context {
 	constructor(public sdd: SimpleDrawDocument) { }
 
 	execute(): string {
+		let output = "OK";
 		switch (this.action) {
 			case 'CIRCLE':
-				this.sdd.createCircle(parseFloat(this.args[0]), parseFloat(this.args[1]), parseFloat(this.args[2]))
+				const circle = this.sdd.createCircle(parseFloat(this.args[0]), parseFloat(this.args[1]), parseFloat(this.args[2]))
+				output = circle.id.toString();
 				break;
 
 			case 'RECTANGLE':
-				this.sdd.createRectangle(parseFloat(this.args[0]), parseFloat(this.args[1]), parseFloat(this.args[2]), parseFloat(this.args[3]))
+				const rectangle = this.sdd.createRectangle(parseFloat(this.args[0]), parseFloat(this.args[1]), parseFloat(this.args[2]), parseFloat(this.args[3]))
+				output = rectangle.id.toString();
 				break;
 
 			case 'TRANSLATE':
 				this.sdd.translateById(parseFloat(this.args[0]), parseFloat(this.args[1]), parseFloat(this.args[2]));
 				break;
+
+			case 'DELETE':
+				this.sdd.deleteById(parseFloat(this.args[0]));
+				break;
 		}
-		return "OK"
+		return output
 	}
 }
 
@@ -223,12 +235,40 @@ class TranslateExpression implements Expression {
 	}
 }
 
+class DeleteExpression implements Expression {
+	args: Array<string>
+
+	interpret(context: Context): string {
+		context.action = 'DELETE'
+		context.args = this.args
+		return context.execute()
+	}
+
+	bindArgs(args: string[]): void {
+		if (args.length != 1)
+			throw 'Error, expected 1 argument'
+
+		for (let arg of args) {
+			if (arg == undefined)
+				throw 'Error, expected numeric argument'
+			if (parseFloat(arg) === NaN)
+				throw "Sytanx error at \"" + arg + "\", expect numeric argument"
+		}
+		this.args = args;
+	}
+
+	getArgsNr(): number {
+		return 1
+	}
+}
+
 /*
 	BASIC GRAMMAR
 
 	Circle x y rad
 	Rectangle x y w h
 	Translate fig_id dx dy
+	Delete fig_id
 	Rotate fig_id ang
 */
 
