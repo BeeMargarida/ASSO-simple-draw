@@ -4,7 +4,7 @@ import { Render, CanvasRender, SVGRender } from './render';
 import { FileManagerFactory } from './file-manager';
 import { UndoManager } from "./undo";
 import axios from 'axios';
-import { PeerCommunicator } from './communication';
+import { CommunicationManager } from './communication';
 
 export class SimpleDrawDocument {
   static API_HOST = 'http://localhost:3000';
@@ -16,7 +16,7 @@ export class SimpleDrawDocument {
   undoManager = new UndoManager()
   selectedArea: Shape = null
   workingFilePath: string = null
-  communicator: PeerCommunicator = new PeerCommunicator()
+  communicationManager: CommunicationManager = new CommunicationManager(this)
   currentId: number
 
   constructor() {
@@ -28,12 +28,12 @@ export class SimpleDrawDocument {
   }
 
   undo() {
-    this.communicator.send(JSON.stringify({ type: 'undo' }))
+    this.communicationManager.send(JSON.stringify({ type: 'undo' }))
     this.undoManager.undo();
   }
 
   redo() {
-    this.communicator.send(JSON.stringify({ type: 'redo' }))
+    this.communicationManager.send(JSON.stringify({ type: 'redo' }))
     this.undoManager.redo();
   }
 
@@ -66,6 +66,7 @@ export class SimpleDrawDocument {
 
   do<T>(a: Action<T>): T {
     this.undoManager.onActionDone(a);
+    //console.log(this.layers);
     return a.do();
   }
 
@@ -79,13 +80,13 @@ export class SimpleDrawDocument {
     }
     else
       action = new DeleteShapeAction(this, [selected.id], this.selectedLayer)
-    this.communicator.send(action.serialize())
+    this.communicationManager.send(action.serialize())
     return this.do(action)
   }
 
   deleteById(id: number){
     const action = new DeleteShapeAction(this, [id], -1)
-    this.communicator.send(action.serialize())
+    this.communicationManager.send(action.serialize())
     return this.do(action)
   }
 
@@ -100,19 +101,19 @@ export class SimpleDrawDocument {
 
   createRectangle(x: number, y: number, width: number, height: number): Shape {
     const action = new CreateRectangleAction(this, this.getShapeId(), x, y, width, height)
-    this.communicator.send(action.serialize())
+    this.communicationManager.send(action.serialize())
     return this.do(action)
   }
 
   createCircle(x: number, y: number, radius: number): Shape {
     const action = new CreateCircleAction(this, this.getShapeId(), x, y, radius)
-    this.communicator.send(action.serialize())
+    this.communicationManager.send(action.serialize())
     return this.do(action)
   }
 
   translate(s: Shape, xd: number, yd: number): Shape {
     const action = new TranslateAction(this, s, xd, yd)
-    this.communicator.send(action.serialize())
+    this.communicationManager.send(action.serialize())
     return this.do(action)
   }
 
@@ -120,7 +121,7 @@ export class SimpleDrawDocument {
     this.layers.forEach((objects) => {
       objects.forEach(shape => {
         const action = new TranslateAction(this, shape, xd, yd)
-        this.communicator.send(action.serialize())
+        this.communicationManager.send(action.serialize())
         this.do(action)
       });
     });
@@ -258,11 +259,11 @@ export class SimpleDrawDocument {
       const coords = a.coords.split(' ')
       this.currentId = id
       if (shape === 'circle') {
-        const act = new CreateCircleAction(this, id, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10))
+        const act = new CreateCircleAction(this, this.getShapeId(), parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10))
         this.undoManager.onActionDone(act);
         this.do(act)
       } else if (shape === 'rectangle') {
-        const act = new CreateRectangleAction(this, id, parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10), parseInt(coords[3], 10))
+        const act = new CreateRectangleAction(this, this.getShapeId(), parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10), parseInt(coords[3], 10))
         this.undoManager.onActionDone(act);
         this.do(act)
       }

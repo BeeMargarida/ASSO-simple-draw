@@ -3,7 +3,6 @@ import { Interpreter } from './interpreter';
 import { CanvasRender, SVGRender } from './render';
 import { Shape, AreaSelected } from './shape';
 import { ColorCanvasRender, WireframeCanvasRender, ColorSVGRender, WireframeSVGRender } from './styles';
-import { UndoManager } from './undo';
 
 var canvasrenderers: CanvasRender[] = []
 var svgrenderers: SVGRender[] = []
@@ -468,26 +467,14 @@ modalSaveBtn.addEventListener('click', () => {
     });
 })
 
-
 // CONNECTION
 let collabBtn: HTMLInputElement = document.getElementById('collabBtn') as HTMLInputElement;
 collabBtn.addEventListener('click', async () => {
-    sdd.communicator.start(true, sdd)
+    sdd.communicationManager.start()
 })
 
 let conBtn: HTMLInputElement = document.getElementById('conBtn') as HTMLInputElement;
 conBtn.addEventListener('click', () => {
-    var peer: string = window.prompt('Enter peer id:')
-    if (!sdd.communicator.running) {
-        sdd.communicator.start(false, sdd)
-        sdd.communicator.peer.signal(peer)
-    } else {
-        sdd.communicator.peer.signal(peer)
-        setTimeout(() => {
-            if (sdd.communicator.running){
-                sdd.communicator.sendState()
-                sdd.undoManager = new UndoManager()
-            }
-        }, 2000)
-    }
+    var peerInfo: string = window.prompt('Enter peer id:')
+    sdd.communicationManager.signal(peerInfo);
 })

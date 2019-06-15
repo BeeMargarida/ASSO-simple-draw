@@ -1,5 +1,6 @@
 import { SimpleDrawDocument } from "./document";
 import { Rectangle, Circle } from "./shape";
+import { UndoManager } from './undo';
 
 //ligar sockets a mandar mensagens random entre 2 browsers
 //fazer serialize das actions DONE
@@ -55,10 +56,14 @@ export class Communicator {
 export class PeerCommunicator {
     peer: any
     public running: boolean = false
+    public initiator: boolean
     document: SimpleDrawDocument
+    public comManager: CommunicationManager
 
-    start(initiator: boolean, document: SimpleDrawDocument) {
+    start(initiator: boolean, document: SimpleDrawDocument, comManager: CommunicationManager) {
         this.document = document
+        this.comManager = comManager
+        this.initiator = initiator
         var Peer = require('simple-peer')
         this.peer = new Peer({
             initiator: initiator,
@@ -74,6 +79,7 @@ export class PeerCommunicator {
     signal(data: string) {
         console.log('signal')
         console.log(JSON.stringify(data))
+
         //window.alert('Collab mode activated. Your id: \n' + JSON.stringify(data))
     }
 
@@ -81,6 +87,7 @@ export class PeerCommunicator {
         console.log('RECEIVED');
         console.log(data.toString())
         this.document.receiveAction(data.toString());
+        this.comManager.sendExceptSelf(data,this);
     }
 
     send(data: string) {
@@ -88,7 +95,7 @@ export class PeerCommunicator {
             return
         console.log('SENT');
         console.log(data);
-        this.peer.send(data)
+        this.peer.write(data)
     }
 
     sendState() {
@@ -112,5 +119,57 @@ export class PeerCommunicator {
             layers: layers
         }
         this.send(JSON.stringify(msg))
+    }
+}
+
+export class CommunicationManager {
+    communicators: Array<PeerCommunicator> = [];
+
+    constructor(public sdd: SimpleDrawDocument) { }
+
+    start(): void {
+        let communicator = new PeerCommunicator()
+        communicator.start(true,this.sdd,this)
+        this.communicators.push(communicator)
+    }
+
+    signal(signalInfo: string): void {
+        if(this.communicators.length > 0 && 
+        this.communicators[this.communicators.length-1].initiator)
+        {
+            const communicator = this.communicators[this.communicators.length-1]  
+            communicator.peer.signal(signalInfo)
+            setTimeout(() => {
+                if (communicator.running){
+                    communicator.sendState()
+                    this.sdd.undoManager = new UndoManager()
+                }
+            }, 2000)
+        }
+        else{
+            const communicator = new PeerCommunicator();
+            communicator.start(false,this.sdd,this)
+            communicator.peer.signal(signalInfo)
+            this.communicators.push(communicator);
+        }
+    }
+
+    send(data: string): void{
+        for(const com of this.communicators){
+            com.send(data);
+        }
+    }
+
+    sendExceptSelf(data: string, communicator: PeerCommunicator): void{
+        for(const com of this.communicators){
+            if(com != communicator)
+                com.send(data);
+        }
+    }
+
+    sendState(){
+        for(const com of this.communicators){
+            com.sendState();
+        }
     }
 }
