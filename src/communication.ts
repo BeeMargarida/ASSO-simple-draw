@@ -54,16 +54,20 @@ export class Communicator {
 }
 
 export class PeerCommunicator {
+    id: number
+    peerId: number = null
     peer: any
-    public running: boolean = false
-    public initiator: boolean
+    running: boolean = false
+    connected: boolean = false
+    initiator: boolean
     document: SimpleDrawDocument
-    public comManager: CommunicationManager
+    comManager: CommunicationManager
 
-    start(initiator: boolean, document: SimpleDrawDocument, comManager: CommunicationManager) {
+    start(id: number, initiator: boolean, document: SimpleDrawDocument, comManager: CommunicationManager) {
+        this.id = id
+        this.initiator = initiator
         this.document = document
         this.comManager = comManager
-        this.initiator = initiator
         var Peer = require('simple-peer')
         this.peer = new Peer({
             initiator: initiator,
@@ -73,13 +77,15 @@ export class PeerCommunicator {
         this.running = true
 
         this.peer.on('signal', (data: string) => this.signal(data))
+        this.peer.on('connect', () => this.connected = true)
         this.peer.on('data', (data: string) => this.receive(data))
+        this.peer.on('error', (err: string) => this.onError(err))
     }
 
     signal(data: string) {
         console.log('signal')
-        console.log(JSON.stringify(data))
-
+        console.log(JSON.stringify({ id: this.peerId != null ? this.peerId : this.id, data: data }))
+        this.peerId = null
         //window.alert('Collab mode activated. Your id: \n' + JSON.stringify(data))
     }
 
@@ -120,38 +126,80 @@ export class PeerCommunicator {
         }
         this.send(JSON.stringify(msg))
     }
+
+    onError(err: string){
+        console.log(err)
+        this.comManager.destroyCommunicator(this.id)
+    }
+
+    destroy(){
+        this.peer.destroy();
+    }
 }
 
 export class CommunicationManager {
-    communicators: Array<PeerCommunicator> = [];
+    communicators: Array<PeerCommunicator> = []
+    signalCommunicator: PeerCommunicator = null
+    currCommunicatorId: number = 0
 
     constructor(public sdd: SimpleDrawDocument) { }
 
     start(): void {
         let communicator = new PeerCommunicator()
-        communicator.start(true,this.sdd,this)
+        communicator.start(this.currCommunicatorId, true,this.sdd,this)
         this.communicators.push(communicator)
+        this.currCommunicatorId++
     }
 
     signal(signalInfo: string): void {
-        if(this.communicators.length > 0 && 
-        this.communicators[this.communicators.length-1].initiator)
+        const info = JSON.parse(signalInfo); 
+        if(info.data.type == "answer")
         {
-            const communicator = this.communicators[this.communicators.length-1]  
-            communicator.peer.signal(signalInfo)
-            setTimeout(() => {
-                if (communicator.running){
-                    communicator.sendState()
-                    this.sdd.undoManager = new UndoManager()
-                }
-            }, 2000)
+            const communicator = this.communicators.find( (communicator: PeerCommunicator) => {
+                return communicator.id == info.id
+            })
+            try{
+                communicator.peer.signal(info.data)
+                setTimeout(() => {
+                    if (communicator.running){
+                        this.signalCommunicator = communicator
+                        communicator.sendState()
+                        this.sdd.undoManager = new UndoManager()
+                    }
+                }, 2000)
+            }
+            catch(e){
+                console.error(e)
+            }
         }
-        else{
+        else if(info.data.type == "offer"){
             const communicator = new PeerCommunicator();
-            communicator.start(false,this.sdd,this)
-            communicator.peer.signal(signalInfo)
-            this.communicators.push(communicator);
+            communicator.start(this.currCommunicatorId,false,this.sdd,this)
+            try{
+                communicator.peerId = info.id
+                communicator.peer.signal(info.data)
+                this.communicators.push(communicator)
+                this.currCommunicatorId++
+            }
+            catch(e){
+                console.error(e)
+            }
         }
+    }
+
+    destroyCommunicator(id: number){
+        this.communicators.splice(id,1)
+        if(this.communicators.length <= 0)
+            this.disconnect()
+    }
+
+    disconnect(){
+        for(const com of this.communicators){
+            com.destroy()
+        }
+        this.communicators.length = 0
+        this.currCommunicatorId = 0
+        this.signalCommunicator = null
     }
 
     send(data: string): void{
@@ -171,5 +219,18 @@ export class CommunicationManager {
         for(const com of this.communicators){
             com.sendState();
         }
+    }
+
+    isActive(){
+        console.log(this.communicators)
+        const activeCommunicator =  this.communicators.find( (communicator: any) => {
+            return communicator.connected
+        })
+        return activeCommunicator != null
+    }
+
+    newConnection(signalInfo: string){
+        const info = JSON.parse(signalInfo)
+        return this.signalCommunicator != null && info.data.type == "offer"
     }
 }

@@ -18,8 +18,10 @@ export class SimpleDrawDocument {
   workingFilePath: string = null
   communicationManager: CommunicationManager = new CommunicationManager(this)
   currentId: number
+  upToDate: boolean = false; //True if model is saved
 
   constructor() {
+    this.layers.push(new Array<Shape>())
     this.currentId = 0;
   }
 
@@ -60,13 +62,13 @@ export class SimpleDrawDocument {
     render.draw(...objs)
   }
 
-  add(r: Shape): void {
-    this.layers[this.selectedLayer].push(r)
+  add(s: Shape): void {
+    this.layers[this.selectedLayer].push(s)
   }
 
   do<T>(a: Action<T>): T {
     this.undoManager.onActionDone(a);
-    //console.log(this.layers);
+    this.upToDate = false;
     return a.do();
   }
 
@@ -143,6 +145,24 @@ export class SimpleDrawDocument {
     this.undoManager.clear();
     this.selectedArea = null;
     this.workingFilePath = null;
+    this.upToDate = false;
+  }
+
+  safeNew(): any {
+    let res: any = {}
+    res.safe = true
+    if(this.communicationManager.isActive()){
+      res.safe = false
+      res.msg = "Connection to peers will be closed."
+    }
+    else if(!this.upToDate){
+      res.safe = false
+      res.msg = "Unsaved changes will be discarded."
+    }
+    else{
+      res.msg = ""
+    }
+    return res
   }
 
   addLayer(): void {
@@ -174,12 +194,12 @@ export class SimpleDrawDocument {
     document.getElementById("layer_id").textContent = this.selectedLayer.toString()
   }
 
-  nextLayer(evt: Event): void {
+  nextLayer(): void {
     this.selectedLayer = this.selectedLayer >= (this.layers.length - 1) ? this.selectedLayer : this.selectedLayer + 1
     this.updateDisabledButtons()
   }
 
-  previousLayer(evt: Event): void {
+  previousLayer(): void {
     this.selectedLayer = this.selectedLayer == 0 ? this.selectedLayer : this.selectedLayer - 1
     this.updateDisabledButtons()
   }
@@ -212,6 +232,7 @@ export class SimpleDrawDocument {
       throw 'Unable to save file';
 
     this.workingFilePath = fileName;
+    this.upToDate = true;
 
     return;
   }
@@ -224,16 +245,21 @@ export class SimpleDrawDocument {
     const fileManager = FileManagerFactory.getFileManager(fileName);
     this.layers = fileManager.load(res.data.content);
     this.workingFilePath = fileName;
+    this.upToDate = true;
   }
 
   receiveState(action: string) {
     const layers = JSON.parse(action).layers
 
-    let first = 0
+    // Clear internal state
+    this.layers.length = 0
+    this.layers.push(new Array<Shape>())
+
+    let newLayer = false;
     for (const layer of layers) {
-      if (first != 0) {
+      if(newLayer){
         this.addLayer()
-        this.nextLayer(null)
+        this.nextLayer()
       }
       for (const shape of layer) {
         const type = shape.split(' ')[0]
@@ -244,10 +270,12 @@ export class SimpleDrawDocument {
           this.add(new Rectangle(id, x, y, parseInt(shape.split(' ')[4]), parseInt(shape.split(' ')[5])))
         else if (type === 'Circle')
           this.add(new Circle(id, x, y, parseInt(shape.split(' ')[4])))
+        this.currentId = id
       }
-      if (first === 0)
-        first = 1
+      if (!newLayer)
+        newLayer = true;
     }
+    this.currentId++
   }
 
   receiveAction(action: string) {

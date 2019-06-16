@@ -364,13 +364,11 @@ function activateColorSVG(evt: Event, id: number): void {
     sdd.drawAll()
 }
 
-
-
 // LAYER
 document.getElementById('new_layer').addEventListener('click', () => sdd.addLayer())
 document.getElementById('delete_layer').addEventListener('click', () => { sdd.deleteLayer(); sdd.drawAll() })
-document.getElementById('previous_layer').addEventListener('click', (evt) => { sdd.previousLayer(evt); sdd.drawAll() })
-document.getElementById('next_layer').addEventListener('click', (evt) => { sdd.nextLayer(evt); sdd.drawAll() })
+document.getElementById('previous_layer').addEventListener('click', () => { sdd.previousLayer(); sdd.drawAll() })
+document.getElementById('next_layer').addEventListener('click', () => { sdd.nextLayer(); sdd.drawAll() })
 
 
 // CONSOLE
@@ -421,7 +419,6 @@ consoleMinMaxBtn.addEventListener('click', () => {
 });
 
 // FILE
-
 let newBtn: HTMLInputElement = document.getElementById('newBtn') as HTMLInputElement;
 let loadBtn: HTMLInputElement = document.getElementById('loadBtn') as HTMLInputElement;
 let saveBtn: HTMLInputElement = document.getElementById('saveBtn') as HTMLInputElement;
@@ -434,8 +431,16 @@ let extensionSelection: HTMLInputElement = document.getElementById('extensionSel
 let saveModal: any = document.getElementById('saveModal');
 
 newBtn.addEventListener('click', () => {
-    sdd.new();
-    sdd.drawAll();
+    const safe: any = sdd.safeNew()
+    if(!safe.safe){
+        const res = window.confirm(`${safe.msg} Do you wish to continue?`)
+        if(!res)
+            return;
+    }
+
+    sdd.communicationManager.disconnect()
+    sdd.new()
+    sdd.drawAll()
 })
 
 loadBtn.addEventListener('click', () => {
@@ -475,6 +480,16 @@ collabBtn.addEventListener('click', async () => {
 
 let conBtn: HTMLInputElement = document.getElementById('conBtn') as HTMLInputElement;
 conBtn.addEventListener('click', () => {
-    var peerInfo: string = window.prompt('Enter peer id:')
+    const peerInfo: string = window.prompt('Enter peer id:')
+    if(peerInfo == "" || peerInfo == null)
+        return    
+
+    if(sdd.communicationManager.newConnection(peerInfo)){
+        const res = window.confirm("Connection to current peers will be closed. Do you wish to continue?")
+        if(!res)
+            return;
+        sdd.communicationManager.disconnect();
+    }
+
     sdd.communicationManager.signal(peerInfo);
 })

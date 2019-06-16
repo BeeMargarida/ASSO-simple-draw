@@ -2,12 +2,15 @@ import { Shape, Circle, Rectangle, AreaSelected } from './shape'
 import { SimpleDrawDocument } from './document'
 
 export interface Action<T> {
+    // saved: boolean
     do(): T
     undo(): void
     serialize(): string
 }
 
 abstract class CreateShapeAction<S extends Shape> implements Action<S> {
+    // saved: boolean = false
+
     constructor(private doc: SimpleDrawDocument, public readonly shape: S) { }
 
     do(): S {
