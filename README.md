@@ -42,14 +42,17 @@ In this section, we describe our approach on the development of each requirement
 #### SVG & Canvas
 To make it possible to have 2 methods of rendering each object - SVG and HTMLCanvas - it was used the **Strategy Pattern**. Each of this methods have a *draw* method, that draws each object in its specific way.
 The following diagram shows how the renders are structured.
+
 ![image](https://user-images.githubusercontent.com/22330550/59570414-b2713f00-908f-11e9-82ae-d3cdc4f341cd.png)
 
 #### Support persistence in multiple formats: TXT, XML, BIN
 In order to be able to export/import the model in different formats the **Strategy pattern** was used. First, the FileManager interface was defined with two methods: save and load, meaning export and import respectively. In order to add support to a new file format, it is only required to create a class that implements the interface such as the currently implemented XMLFileManager and TXTFileManager. Finally, to simplify the creation and usage of the correct strategy whenever needed a simple string based factory FileManagerFactory was added. On the diagram below, it is visible the use of the pattern and how the classes are organized.
+
 ![image](https://user-images.githubusercontent.com/22330550/59570430-f49a8080-908f-11e9-93dc-a8e791098633.png)
 
 #### Extendible with different objects
 The system must use of different objects, allowing the same actions (create, delete, translate, etc) to be applied to all of them. To do so, we users the **Strategy Pattern** to have multiple objects (shapes) descending from one class Shape. If there is the need to add new objects, e.g. a triangle, we need to create a class Triangle that extends Shape, and complete the methods that it needs. The diagram below displays the structure of the object classes.
+
 ![image](https://user-images.githubusercontent.com/22330550/59570230-f0b92f00-908c-11e9-94c0-b664b88442d4.png)
 
 #### Extendible with new tools
