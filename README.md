@@ -1,5 +1,12 @@
 # SimpleDraw
 
+## Introduction
+SimpleDraw is a project developed for the subject of Software Systems Architecture of the Integrated Masters in Informatics and Computing Engineering.
+
+SimpleDraw consists of a collaborative painting tool, developed in typescript, with as few external packages as possible, to allow the application of as much knowledge as possible.
+
+The main objective was to develop a graphical editor to draw basic geometric objects, manipulate and persist them, with the possibility to add collaborators to a project and have multiple collaborators drawing on the same project, conflict free.
+
 ## Goals
 
 Develop a graphical editor to draw basic geometric objects, manipulate and persist them.
@@ -11,6 +18,8 @@ Develop a graphical editor to draw basic geometric objects, manipulate and persi
 * Libraries for non-engine stuff only (sass, bootstrap)
 
 ## Functionalities
+
+To have an extendible tool, well designed and ready to be improved, the following functionalities were set as system requiremtents:
 
 * [x] SimpleDraw is based on the notion of documents
 * [x] Documents are rendered either in SVG or HTMLCanvas
@@ -26,13 +35,18 @@ Develop a graphical editor to draw basic geometric objects, manipulate and persi
 * [x] Support (un)limited Undo/Redo of all operations
 * [ ] **OP MODE** Collaborate using multiple browsers and no backend/server
 
-## Problems 
+## Implementation Details
+
+In this section, we describe our approach on the development of each requirement, as detailed as possible.
 
 #### SVG & Canvas
 To make it possible to have 2 methods of rendering each object - SVG and HTMLCanvas - it was used the **Strategy Pattern**. Each of this methods have a *draw* method, that draws each object in its specific way.
+The following diagram shows how the renders are structured.
+![image](https://user-images.githubusercontent.com/22330550/59570414-b2713f00-908f-11e9-82ae-d3cdc4f341cd.png)
 
 #### Support persistence in multiple formats: TXT, XML, BIN
-In order to be able to export/import the model in different formats the **Strategy pattern** was used. First, the FileManager interface was defined with two methods: save and load, meaning export and import respectively. In order to add support to a new file format, it is only required to create a class that implements the interface such as the currently implemented XMLFileManager and TXTFileManager. Finally, to simplify the creation and usage of the correct strategy whenever needed a simple string based factory FileManagerFactory was added.
+In order to be able to export/import the model in different formats the **Strategy pattern** was used. First, the FileManager interface was defined with two methods: save and load, meaning export and import respectively. In order to add support to a new file format, it is only required to create a class that implements the interface such as the currently implemented XMLFileManager and TXTFileManager. Finally, to simplify the creation and usage of the correct strategy whenever needed a simple string based factory FileManagerFactory was added. On the diagram below, it is visible the use of the pattern and how the classes are organized.
+![image](https://user-images.githubusercontent.com/22330550/59570430-f49a8080-908f-11e9-93dc-a8e791098633.png)
 
 #### Extendible with different objects
 The system must use of different objects, allowing the same actions (create, delete, translate, etc) to be applied to all of them. To do so, we users the **Strategy Pattern** to have multiple objects (shapes) descending from one class Shape. If there is the need to add new objects, e.g. a triangle, we need to create a class Triangle that extends Shape, and complete the methods that it needs. The diagram below displays the structure of the object classes.
