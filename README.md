@@ -33,7 +33,7 @@ To have an extendible tool, well designed and ready to be improved, the followin
 * [x] Different view styles per viewport (wireframe, color)
 * [x] Two interaction modes: *point-n-click* and *REPLs*
 * [x] Support (un)limited Undo/Redo of all operations
-* [ ] **OP MODE** Collaborate using multiple browsers and no backend/server
+* [x] **OP MODE** Collaborate using multiple browsers and no backend/server
 
 ## Implementation Details
 
