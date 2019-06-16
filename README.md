@@ -62,6 +62,9 @@ The shape tools implementation is modular, so to add new tools, e.g. rotation of
 The system allows the user to temporarily select an area that can contain several shapes. With this, the user can make actions to the selected number. To make this possible and very modular, we used the **Composite Pattern**, so that a AreaSelected is a Shape that contains several Shapes, as we can see in the code below:
 ![Area Selection Composite](./prints/composite.png)
 With this, it is possible to do shape actions, like translate, and the class AreaSelected specifies this action for itself. This allows the selection to be modular and iterate above the Shape class.
+The diagram below shows the relation between the AreaSelected and the shapes. It is important to refer that an AreaSelected cannot contain another AreaSelected inside it, because it makes no sense in the context.
+
+![image](https://user-images.githubusercontent.com/22330550/59570513-2fe97f00-9091-11e9-91d6-6e49dfce1e67.png)
 
 #### Support layers of objects
 SimpleDraw as the functionality of creating and deleting layers. These layers allow to create objects that are independent from objects in other layers. These makes it easy to only make actions of the selected layer. Besides this, it allows for the deletion of several objects at once, by deleting their layer.
