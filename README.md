@@ -56,7 +56,9 @@ The system must use of different objects, allowing the same actions (create, del
 ![image](https://user-images.githubusercontent.com/22330550/59570230-f0b92f00-908c-11e9-94c0-b664b88442d4.png)
 
 #### Extendible with new tools
-The shape tools implementation is modular, so to add new tools, e.g. rotation of shapes, we must create a new RotateAction that implements Action, and add on the SimpleDrawDocument a function to create the action and call its do().
+The shape tools implementation is modular, so to add new tools, e.g. rotation of shapes, we must create a new RotateAction that implements Action, and add on the SimpleDrawDocument a function to create the action and call its do(). The diagram below displays how the actions are structured, just like with the shapes, they follow the **Strategy Pattern**, which eases the addition of new tools (actions).
+
+![image](https://user-images.githubusercontent.com/22330550/59570596-a0dd6680-9092-11e9-9777-02b39fa08d4b.png)
 
 #### Area Selection
 The system allows the user to temporarily select an area that can contain several shapes. With this, the user can make actions to the selected number. To make this possible and very modular, we used the **Composite Pattern**, so that a AreaSelected is a Shape that contains several Shapes, as we can see in the code below:
@@ -75,7 +77,10 @@ To do this, the objects and operations are not stored on the views, but on a cla
 This approach consists of a **MVC** application, in which the Shape class is the model, the Render class is the view and the controller, although not being completely defined and separated in a single class, is split through some classes that have the need to work on the shapes.
 
 #### Viewport tools (translate, zoom on the viewport)
-To support viewport tools, we use mouse events, such as the scroll event to zoom in or zoom out on the scene, or the click and drag (mousedown + mouseup with different coordinates) to translate the whole scene. This problem takes advantage of the previous one (**Multiple views of the same model in the screen**), in the sense that it only applies the viewport tool to the viewport where the mouse is, not affecting the others.
+To support viewport tools, we use mouse events, such as the scroll event to zoom in or zoom out on the scene, or the click and drag (mousedown + mouseup with different coordinates) to translate the whole scene. This problem takes advantage of the previous one (**Multiple views of the same model in the screen**), in the sense that it only applies the viewport tool to the viewport where the mouse is, not affecting the others. It also takes advantage of the **Strategy** described on the first problem (**SVG & Canvas**), since each viewport (render) is independent from all others, so actions taken on one viewport don't affect the others.
+On the image below, we can see the four "tools" implemented for the existing renders, draw, setStyle, applyZoom and translate. To add more tools, for example, rotate the viewport, the developer needs to add a method to the renders (and the Render interface) that implements the desired tool.
+
+![image](https://user-images.githubusercontent.com/22330550/59570696-33323a00-9094-11e9-9797-865c3e666354.png)
 
 #### Different view styles per viewport
 To make the styling possible we used the **Strategy Pattern**, where each render has a *Style*. We also used the **State Pattern** to change the style when the user clicks in the *Color/Stroke* button. We currently have 2 styles: *Wireframe* and *Color*. However, it is easy to expand and add more: create 2 classes (one for SVG and other for Canvas) that implement the interface *Style*, and the method *draw* is the one responsible for implementing the drawing logic. 
@@ -95,8 +100,38 @@ For the REPL, a simple interpreter was created based on the **Interpreter patter
 The grammar is very simple only containing terminal expressions but could easily be expanded to be more complex with multiple compound expressions. However, this would also require more effort regarding the parsing and building of the AST to match the more complex grammar, which even though can parse multiple expressions only interprets the first one at the moment.
 
 #### Undo/Redo 
-It must be possible to undo/redo any action made in the editor. First of all, every change made in the document had to be translated to an action. This corresponds to the **Command Patter**.
-To apply the undo/redo, there are 2 stacks, the *doStack* and the *undoStack*. When an action is made (create shape, translate shape, etc), the action is added to the *doStack* and the *undoStack* is emptied, so that it doesn't create problems if a redo was made before. Each action has a *do* and *redo* method, the first when an action is first made or when the redo is of the *undoManager* is called. The *redo* method of the action is the reverse of said action and is called when the *undo* method of the *undoManager* is called. 
+It must be possible to undo/redo any action made in the editor. First of all, every change made in the document had to be translated to an action. This corresponds to the **Command Pattern**.
+To apply the undo/redo, there are 2 stacks, the *doStack* and the *undoStack*. When an action is made (create shape, translate shape, etc), the action is added to the *doStack* and the *undoStack* is emptied, so that it doesn't create problems if a redo was made before. Each action has a *do* and *redo* method, the first when an action is first made or when the redo is of the *undoManager* is called. The *redo* method of the action is the reverse of said action and is called when the *undo* method of the *undoManager* is called.
+The following images display how the actions are stored on the stacks and how they are moved from one to another. After the sequence that caused the context of the second image, if a redo() was called, *Action5* would be removed from the *undoStack* and would go back to the place were it was on the *doStack*.
+
+![image](https://user-images.githubusercontent.com/22330550/59570854-36c6c080-9096-11e9-8a42-27e15b682e8e.png)
+![image](https://user-images.githubusercontent.com/22330550/59570875-5c53ca00-9096-11e9-9b73-abbbe37c86b3.png)
+
 
 #### **OP MODE** Collaborate using multiple browsers and no backend/server
-The system should allow users to collaborate on a project, using multiple browsers/machines. To do so, we used webRTC to communicate between peers, on a peer2peer basis. When a user makes an action on the project, it is sent to all his peers, in order for them to update the project's state. To ensure consistency in all instances, we applied a consensus method based on the timestamps of actions, so that if multiple users touch the same object at the same time, only 1 action is applied, and not all of them. When a new peer connects to a peer that is sharing his project, he receives the actual state of the project all at once, to become up-to-date and from there on receives and sends actions. In case of failure, if a peer loses connection to another, it must reconnect and the process is the same, it receives the actual state of the project and from there on, receives and sends actions.
+The system should allow users to collaborate on a project, using multiple browsers/machines. To do so, we used webRTC to communicate between peers, on a peer2peer basis. When a user makes an action on the project, it is sent to all his peers, in order for them to update the project's state. To ensure consistency in all instances, we applied a consensus method based on the timestamps of actions, so that if multiple users act on the same object at the same time, only 1 action should applied, instead of all of them. When a new peer connects to a peer that is sharing his project, he receives the actual state of the project all at once, to become up-to-date and from there on receives and sends actions. In case of failure, if a peer loses connection to another, it must reconnect and the process is the same, it receives the actual state of the project and from there on, receives and sends actions.
+
+![image](https://user-images.githubusercontent.com/22330550/59570955-5dd1c200-9097-11e9-8840-033136680c4e.png)
+
+On the image above, we have four peers all connected, where Peer1 is connected to Peer2 and Peer3 (which means that Peer2 and Peer3 connected to Peer1) and Peer4 is connected to Peer3. Therefore, when a message *message1* is sent from Peer1 (e.g. when Peer1 creates a rectangle), the message propagates through all peers and each peer receives it once (so there are no possible duplicates of messages) and each peer decides if the action should be applied, according to the consensus method explained above.
+With the implemented structure, we believe that every peer is always up-to-date and synchronized with all others, even if connection is lost, because when it is restored, the peer receives the up-to-date state of the project.
+
+## Conclusions
+
+After concluding the project, we believe that it was a success, since we were able to implement more than we believed on the beginning. With this said, we implemented all the requirements keeping the system modular and simple, to easily allow extensions and improvements to it.
+
+If we had more time, we could have improved the communication system, added more tools, such as rotations or resizes, or even turn the tool into a 3D tool. This last one would require a bit more time than the others, just a bit.
+
+## Contributors
+
+* Ana Margarida Silva
+* Bruno Piedade
+* Danny Soares
+
+## Honorable Mentions 
+
+The following persons contributed to the first stages of the project (developed in class)
+
+* André Cruz
+* Davide Costa
+* Hugo Sereno
