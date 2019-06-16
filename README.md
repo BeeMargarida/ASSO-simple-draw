@@ -15,7 +15,7 @@ Develop a graphical editor to draw basic geometric objects, manipulate and persi
 * [x] SimpleDraw is based on the notion of documents
 * [x] Documents are rendered either in SVG or HTMLCanvas
 * [x] Support persistence in multiple formats: TXT, XML, BIN
-* [ ] Extendible with different objects (triangles, arrows, etc)
+* [x] Extendible with different objects (triangles, arrows, etc)
 * [x] Extendible with new tools (rotate, translate shapes)
 * [x] Support area selections
 * [x] Support layers of objects
@@ -32,7 +32,7 @@ Develop a graphical editor to draw basic geometric objects, manipulate and persi
 To make it possible to have 2 methods of rendering each object - SVG and HTMLCanvas - it was used the **Strategy Pattern**. Each of this methods have a *draw* method, that draws each object in its specific way.
 
 #### Support persistence in multiple formats: TXT, XML, BIN
-TODO Bruno
+In order to be able to export/import the model in different formats the **Strategy pattern** was used. First, the FileManager interface was defined with two methods: save and load, meaning export and import respectively. In order to add support to a new file format, it is only required to create a class that implements the interface such as the currently implemented XMLFileManager and TXTFileManager. Finally, to simplify the creation and usage of the correct strategy whenever needed a simple string based factory FileManagerFactory was added.
 
 #### Extendible with different objects
 The system must use of different objects, allowing the same actions (create, delete, translate, etc) to be applied to all of them. To do so, we users the **Strategy Pattern** to have multiple objects (shapes) descending from one class Shape. If there is the need to add new objects, e.g. a triangle, we need to create a class Triangle that extends Shape, and complete the methods that it needs.
@@ -64,7 +64,14 @@ Below we can see the *Style* interface and an implemention of the Color mode for
 ![ViewStyles](./prints/styles_imp.png)
 
 #### Two interaction modes: *point-n-click* and *REPLs*
-TODO Bruno
+For the REPL, a simple interpreter was created based on the **Interpreter pattern**. First, the string inserted by the user in the frontend is passed to the interpreter which starts by tokenizing it using a set of valid regex string patterns. Then, the tokens are parsed and converted into a simple abstract syntax tree (AST) matching the interpreter's expected structure (grammar validations are made during this process). Finally, the interpreter is ready to execute the corresponding command by running the interpret method of the root of the tree which collects the required information in a context and calls the corresponding action. The grammar includes creation and deletion expressions for the different shapes and the operations applied to them such as translations and accepts the following commands:
+
+* circle x y radius
+* rectangle x y width height
+* translate fig_id dx dy
+* delete fig_id
+
+The grammar is very simple only containing terminal expressions but could easily be expanded to be more complex with multiple compound expressions. However, this would also require more effort regarding the parsing and building of the AST to match the more complex grammar, which even though can parse multiple expressions only interprets the first one at the moment.
 
 #### Undo/Redo 
 It must be possible to undo/redo any action made in the editor. First of all, every change made in the document had to be translated to an action. This corresponds to the **Command Patter**.
