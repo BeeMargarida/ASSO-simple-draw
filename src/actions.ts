@@ -2,15 +2,19 @@ import { Shape, Circle, Rectangle, AreaSelected } from './shape'
 import { SimpleDrawDocument } from './document'
 
 export interface Action<T> {
+
     // saved: boolean
     do(): T
     undo(): void
     serialize(): string
+    getShapesId(): Array<number>
+    getTimestamp(): Date
 }
 
 abstract class CreateShapeAction<S extends Shape> implements Action<S> {
-    
-    constructor(private doc: SimpleDrawDocument, public layer: number, public readonly shape: S) { }
+    // saved: boolean = false
+
+    constructor(private doc: SimpleDrawDocument, public layer: number, public readonly shape: S, public readonly timestamp: Date) { }
 
     do(): S {
         this.doc.add(this.shape, this.layer)
@@ -25,12 +29,21 @@ abstract class CreateShapeAction<S extends Shape> implements Action<S> {
         this.doc.layers = layers
     }
 
+    getShapesId(): Array<number> {
+        return new Array(this.shape.id)
+    }
+
+    getTimestamp(): Date {
+        return this.timestamp
+    }
+
     abstract serialize(): string
+
 }
 
 export class DeleteShapeAction<S extends Shape> implements Action<S> {
     shapes: Array<Shape> = []
-    constructor(private doc: SimpleDrawDocument, public shapeIds: number[], public layer: number) { }
+    constructor(private doc: SimpleDrawDocument, public shapeIds: number[], public layer: number, public readonly timestamp: Date) { }
 
     do(): S {
         for(const s of this.shapeIds){
@@ -61,10 +74,19 @@ export class DeleteShapeAction<S extends Shape> implements Action<S> {
             this.doc.layers[this.layer].push(s)
     }
 
+    getShapesId(): Array<number> {
+        return Array.from(this.shapeIds)
+    }
+
+    getTimestamp(): Date {
+        return this.timestamp
+    }
+
     serialize(): string {
         let action = {
             type: 'delete',
             shape: this.shapeIds,
+            timestamp: this.timestamp.toISOString(),
             layer: this.layer
         }
         return JSON.stringify(action)
@@ -72,8 +94,8 @@ export class DeleteShapeAction<S extends Shape> implements Action<S> {
 }
 
 export class CreateCircleAction extends CreateShapeAction<Circle> {
-    constructor(doc: SimpleDrawDocument, public layer: number, private id: number, private x: number, private y: number, private radius: number) {
-        super(doc, layer, new Circle(id, x, y, radius))
+    constructor(doc: SimpleDrawDocument, public layer: number, private id: number, private x: number, private y: number, private radius: number, public readonly timestamp: Date) {
+        super(doc, layer, new Circle(id, x, y, radius), timestamp)
     }
 
     serialize(): string {
@@ -82,6 +104,7 @@ export class CreateCircleAction extends CreateShapeAction<Circle> {
             shape: 'circle',
             layer: this.layer,
             id: this.id,
+            timestamp: this.timestamp.toISOString(),
             coords: '' + this.x + ' ' + this.y + ' ' + this.radius
         }
         return JSON.stringify(action)
@@ -89,8 +112,8 @@ export class CreateCircleAction extends CreateShapeAction<Circle> {
 }
 
 export class CreateRectangleAction extends CreateShapeAction<Rectangle> {
-    constructor(doc: SimpleDrawDocument, private id: number, public layer: number, private x: number, private y: number, private width: number, private height: number) {
-        super(doc, layer, new Rectangle(id, x, y, width, height))
+    constructor(doc: SimpleDrawDocument, public layer: number, private id: number, private x: number, private y: number, private width: number, private height: number, public readonly timestamp: Date) {
+        super(doc, layer, new Rectangle(id, x, y, width, height), timestamp)
     }
 
     serialize(): string {
@@ -99,6 +122,7 @@ export class CreateRectangleAction extends CreateShapeAction<Rectangle> {
             shape: 'rectangle',
             layer: this.layer,
             id: this.id,
+            timestamp: this.timestamp.toISOString(),
             coords: '' + this.x + ' ' + this.y + ' ' + this.width + ' ' + this.height
         }
         return JSON.stringify(action)
@@ -109,7 +133,7 @@ export class TranslateAction implements Action<void> {
     oldX: number
     oldY: number
 
-    constructor(private doc: SimpleDrawDocument, public shape: Shape, private xd: number, private yd: number) { }
+    constructor(private doc: SimpleDrawDocument, public shape: Shape, private xd: number, private yd: number, public readonly timestamp: Date) { }
 
     do(): Shape {
         if (this.shape instanceof AreaSelected) {
@@ -133,6 +157,14 @@ export class TranslateAction implements Action<void> {
         this.shape.y = this.oldY
     }
 
+    getShapesId(): Array<number> {
+        return new Array(this.shape.id)
+    }
+
+    getTimestamp(): Date {
+        return this.timestamp
+    }
+
     serialize(): string {
         let shapesIds: Array<number> = new Array<number>()
         if (this.shape instanceof AreaSelected)
@@ -145,6 +177,7 @@ export class TranslateAction implements Action<void> {
         let action = {
             type: 'translate',
             shape: shapesIds,
+            timestamp: this.timestamp.toISOString(),
             coords: '' + this.xd + ' ' + this.yd
         }
         return JSON.stringify(action)

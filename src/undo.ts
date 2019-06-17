@@ -1,4 +1,4 @@
-type UndoableAction<S> = { do(): S; undo(): void }
+type UndoableAction<S> = { do(): S; undo(): void, getShapesId(): Array<number>, getTimestamp(): Date }
 
 export class UndoManager<S, A extends UndoableAction<S>> {
   doStack = new Array<A>();
@@ -12,6 +12,7 @@ export class UndoManager<S, A extends UndoableAction<S>> {
   undo() {
     if (this.doStack.length > 0) {
       const a1 = this.doStack.pop();
+      console.log(a1)
       a1.undo();
       this.undoStack.push(a1);
     }
@@ -29,4 +30,5 @@ export class UndoManager<S, A extends UndoableAction<S>> {
     this.doStack.push(a);
     this.undoStack.length = 0;
   }
+
 }
