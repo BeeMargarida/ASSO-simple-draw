@@ -179,17 +179,27 @@ export class SimpleDrawDocument {
     return res
   }
 
-  addLayer(): void {
+  addLayer(initiator: boolean = true): void {
     this.layers.push(new Array<Shape>())
     this.updateDisabledButtons()
+
+    if(initiator)
+       this.communicationManager.send(JSON.stringify({ type: "addLayer"}))
   }
 
-  deleteLayer(): void {
+  deleteSelectedLayer(): void {
+    this.deleteLayer(this.selectedLayer, true)
+  }
+
+  deleteLayer(layer: number, initiator: boolean): void {
     if (this.layers.length != 1) {
-      this.layers.splice(this.selectedLayer, 1)
+      this.layers.splice(layer, 1)
       this.selectedLayer = this.selectedLayer == 0 ? 0 : this.selectedLayer - 1
       this.updateDisabledButtons()
     }
+
+    if(initiator)
+      this.communicationManager.send(JSON.stringify({ type: "deleteLayer", layer: layer}))
   }
 
   updateDisabledButtons(): void {
@@ -273,7 +283,7 @@ export class SimpleDrawDocument {
     let layerIdx = 0;
     for (const layer of layers) {
       if(newLayer)
-        this.addLayer()
+        this.addLayer(false)
       
       for (const shape of layer) {
         const type = shape.split(' ')[0]
@@ -364,6 +374,11 @@ export class SimpleDrawDocument {
       this.receiveState(action)
     } else if (type === 'incrementId') {
       this.currentId = a.id
+    } else if(type == "addLayer") {
+      this.addLayer(false)
+    } else if(type == "deleteLayer") {
+      const layer = a.layer
+      this.deleteLayer(layer,false)
     }
     this.drawAll()
   }

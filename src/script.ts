@@ -367,7 +367,7 @@ function activateColorSVG(evt: Event, id: number): void {
 
 // LAYER
 document.getElementById('new_layer').addEventListener('click', () => sdd.addLayer())
-document.getElementById('delete_layer').addEventListener('click', () => { sdd.deleteLayer(); sdd.drawAll() })
+document.getElementById('delete_layer').addEventListener('click', () => { sdd.deleteSelectedLayer(); sdd.drawAll() })
 document.getElementById('previous_layer').addEventListener('click', () => { sdd.previousLayer(); sdd.drawAll() })
 document.getElementById('next_layer').addEventListener('click', () => { sdd.nextLayer(); sdd.drawAll() })
 
