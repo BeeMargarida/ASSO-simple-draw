@@ -22,8 +22,8 @@ abstract class CreateShapeAction<S extends Shape> implements Action<S> {
     }
 
     undo() {
-        var layers = new Array<Array<Shape>>()
-        for (var layer of this.doc.layers) {
+        let layers = new Array<Array<Shape>>()
+        for (let layer of this.doc.layers) {
             layers.push(layer.filter(o => o !== this.shape))
         }
         this.doc.layers = layers
@@ -179,6 +179,45 @@ export class TranslateAction implements Action<void> {
             shape: shapesIds,
             timestamp: this.timestamp.toISOString(),
             coords: '' + this.xd + ' ' + this.yd
+        }
+        return JSON.stringify(action)
+    }
+}
+
+export class DeleteLayerAction implements Action<void> {
+    layer: Array<Shape>
+
+    constructor(private doc: SimpleDrawDocument, public layerIdx: number, public readonly timestamp: Date) { 
+        this.layer = doc.layers[layerIdx]
+    }
+
+    do() {
+        if (this.doc.layers.length != 1) {
+          this.doc.layers.splice(this.layerIdx, 1)
+          this.doc.selectedLayer = this.doc.selectedLayer == 0 ? 0 : this.doc.selectedLayer - 1
+          this.doc.updateDisabledButtons()
+        }
+    }
+
+    undo() {
+      this.doc.layers.splice(this.layerIdx, 0, this.layer)
+      this.doc.updateDisabledButtons()
+    }
+
+    getShapesId(): Array<number> {
+        return this.layer.map( (s: Shape) => { return s.id })
+    }
+
+    getTimestamp(): Date {
+        return this.timestamp
+    }
+
+    serialize(): string {
+        let action = {
+            type: 'deleteLayer',
+            layerIdx: this.layerIdx,
+            shape: this.getShapesId(),
+            timestamp: this.timestamp.toISOString()
         }
         return JSON.stringify(action)
     }
