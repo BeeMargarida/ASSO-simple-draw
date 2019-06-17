@@ -156,6 +156,7 @@ function onMouseUpLeft(e: any, render: CanvasRender | SVGRender) {
                 upperLeftX = (upperLeftX - render.centerX) / render.zoom + render.originalCenterX
                 upperLeftY = (upperLeftY - render.centerY) / render.zoom + render.originalCenterY
                 selected = new AreaSelected(sdd.getShapeId(), upperLeftX, upperLeftY, Math.abs(deltaX / render.zoom), Math.abs(deltaY / render.zoom), selectedShapes)
+                sdd.communicationManager.send(JSON.stringify({type: "incrementId", id: sdd.currentId}))
                 selectedLabel.innerHTML = '' + selected.id
                 sdd.selectedArea = selected
                 sdd.drawAll()

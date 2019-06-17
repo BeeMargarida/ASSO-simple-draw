@@ -31,12 +31,14 @@ export class SimpleDrawDocument {
   }
 
   undo() {
-    this.communicationManager.send(JSON.stringify({ type: 'undo' }))
+    if (this.undoManager.doStack.length > 0)
+      this.communicationManager.send(JSON.stringify({ type: 'undo' }))
     this.undoManager.undo();
   }
 
   redo() {
-    this.communicationManager.send(JSON.stringify({ type: 'redo' }))
+    if (this.undoManager.undoStack.length > 0)
+      this.communicationManager.send(JSON.stringify({ type: 'redo' }))
     this.undoManager.redo();
   }
 
@@ -87,7 +89,7 @@ export class SimpleDrawDocument {
     return this.do(action)
   }
 
-  deleteById(id: number){
+  deleteById(id: number) {
     const action = new DeleteShapeAction(this, [id], -1, new Date())
     this.communicationManager.send(action.serialize())
     return this.do(action)
@@ -152,15 +154,15 @@ export class SimpleDrawDocument {
   safeNew(): any {
     let res: any = {}
     res.safe = true
-    if(this.communicationManager.isActive()){
+    if (this.communicationManager.isActive()) {
       res.safe = false
       res.msg = "Connection to peers will be closed."
     }
-    else if(!this.upToDate){
+    else if (!this.upToDate) {
       res.safe = false
       res.msg = "Unsaved changes will be discarded."
     }
-    else{
+    else {
       res.msg = ""
     }
     return res
@@ -258,7 +260,7 @@ export class SimpleDrawDocument {
 
     let newLayer = false;
     for (const layer of layers) {
-      if(newLayer){
+      if (newLayer) {
         this.addLayer()
         this.nextLayer()
       }
@@ -285,13 +287,13 @@ export class SimpleDrawDocument {
     const shape = a.shape
 
     const lastAction = this.undoManager.doStack[this.undoManager.doStack.length - 1]
-    
+
     if (type === 'create') {
 
-      if(lastAction !== undefined){
+      if (lastAction !== undefined) {
         const lastActionShapesId = lastAction.getShapesId()
         // If the received action has conflict with a new action made by the user
-        if(lastActionShapesId.indexOf(shape.id) == -1  && new Date(a.timestamp) < lastAction.getTimestamp()) {
+        if (lastActionShapesId.indexOf(shape.id) == -1 && new Date(a.timestamp) < lastAction.getTimestamp()) {
           return
         }
       }
@@ -301,44 +303,54 @@ export class SimpleDrawDocument {
       this.currentId = id
       if (shape === 'circle') {
         const act = new CreateCircleAction(this, this.getShapeId(), parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10), new Date())
-        this.undoManager.onActionDone(act);
         this.do(act)
       } else if (shape === 'rectangle') {
         const act = new CreateRectangleAction(this, this.getShapeId(), parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10), parseInt(coords[3], 10), new Date())
-        this.undoManager.onActionDone(act);
         this.do(act)
       }
     } else if (type === 'translate') {
 
-      if(lastAction !== undefined && shape.length !== 0){
+      if (lastAction !== undefined && shape.length !== 0) {
         const lastActionShapesId = lastAction.getShapesId()
-        // If the received action has conflict with a new action made by the user
-        if(checkOverlap(Array.from(shape), lastActionShapesId) && new Date(a.timestamp) < lastAction.getTimestamp()) {
+        if (checkOverlap(Array.from(shape), lastActionShapesId) && new Date(a.timestamp) < lastAction.getTimestamp()) {
           return
         }
       }
 
+      let shapes: Array<Shape> = new Array<Shape>()
       const coords = a.coords.split(' ')
       for (const shapeId of shape) {
         for (const l of this.layers)
           for (const s of l)
             if (s.id === shapeId) {
-              const act = new TranslateAction(this, s, parseInt(coords[0], 10), parseInt(coords[1], 10), new Date())
-              this.undoManager.onActionDone(act);
-              this.do(act)
+              shapes.push(s)
             }
       }
+
+      let act: any
+      if (shapes.length === 1)
+        act = new TranslateAction(this, shapes[0], parseInt(coords[0], 10), parseInt(coords[1], 10), new Date())
+      else if (shapes.length === 0)
+        return
+      else if (shapes.length > 1) {
+        const sel = new AreaSelected(this.currentId, 0, 0, 0, 0, shapes)
+        act = new TranslateAction(this, sel, parseInt(coords[0], 10), parseInt(coords[1], 10), new Date())
+      }
+      this.do(act)
     } else if (type === 'delete') {
       const layer = a.layer
       const act = new DeleteShapeAction(this, shape, layer, new Date())
-      this.undoManager.onActionDone(act)
       this.do(act)
     } else if (type === 'undo') {
-      this.undoManager.undo();
+      if (this.undoManager.doStack.length > 0)
+        this.undoManager.undo();
     } else if (type === 'redo') {
-      this.undoManager.redo();
+      if (this.undoManager.undoStack.length > 0)
+        this.undoManager.redo();
     } else if (type === 'state') {
       this.receiveState(action)
+    } else if (type === 'incrementId') {
+      this.currentId = a.id
     }
     this.drawAll()
   }

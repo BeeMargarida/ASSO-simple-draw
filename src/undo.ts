@@ -12,6 +12,7 @@ export class UndoManager<S, A extends UndoableAction<S>> {
   undo() {
     if (this.doStack.length > 0) {
       const a1 = this.doStack.pop();
+      console.log(a1)
       a1.undo();
       this.undoStack.push(a1);
     }
