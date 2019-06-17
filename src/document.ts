@@ -62,8 +62,19 @@ export class SimpleDrawDocument {
     render.draw(...objs)
   }
 
-  add(s: Shape): void {
-    this.layers[this.selectedLayer].push(s)
+  add(s: Shape, layer: number): void {
+
+    // Check if layer exists otherwise create
+    const maxLayerIdx = this.layers.length;
+    let i = maxLayerIdx;
+    for(i; i <= layer; i++){
+      this.layers.push(new Array<Shape>())
+    }
+
+    if(i != maxLayerIdx)
+      this.updateDisabledButtons()
+
+    this.layers[layer].push(s)
   }
 
   do<T>(a: Action<T>): T {
@@ -102,13 +113,13 @@ export class SimpleDrawDocument {
   }
 
   createRectangle(x: number, y: number, width: number, height: number): Shape {
-    const action = new CreateRectangleAction(this, this.getShapeId(), x, y, width, height)
+    const action = new CreateRectangleAction(this, this.selectedLayer, this.getShapeId(), x, y, width, height)
     this.communicationManager.send(action.serialize())
     return this.do(action)
   }
 
   createCircle(x: number, y: number, radius: number): Shape {
-    const action = new CreateCircleAction(this, this.getShapeId(), x, y, radius)
+    const action = new CreateCircleAction(this, this.selectedLayer, this.getShapeId(), x, y, radius)
     this.communicationManager.send(action.serialize())
     return this.do(action)
   }
@@ -256,24 +267,25 @@ export class SimpleDrawDocument {
     this.layers.push(new Array<Shape>())
 
     let newLayer = false;
+    let layerIdx = 0;
     for (const layer of layers) {
-      if(newLayer){
+      if(newLayer)
         this.addLayer()
-        this.nextLayer()
-      }
+      
       for (const shape of layer) {
         const type = shape.split(' ')[0]
         const id = parseInt(shape.split(' ')[1])
         const x = parseInt(shape.split(' ')[2])
         const y = parseInt(shape.split(' ')[3])
         if (type === 'Rectangle')
-          this.add(new Rectangle(id, x, y, parseInt(shape.split(' ')[4]), parseInt(shape.split(' ')[5])))
+          this.add(new Rectangle(id, x, y, parseInt(shape.split(' ')[4]), parseInt(shape.split(' ')[5])), layerIdx)
         else if (type === 'Circle')
-          this.add(new Circle(id, x, y, parseInt(shape.split(' ')[4])))
+          this.add(new Circle(id, x, y, parseInt(shape.split(' ')[4])), layerIdx)
         this.currentId = id
       }
       if (!newLayer)
         newLayer = true;
+      layerIdx++;
     }
     this.currentId++
   }
@@ -284,14 +296,15 @@ export class SimpleDrawDocument {
     const shape = a.shape
     if (type === 'create') {
       const id = a.id
+      const layerId = a.layer
       const coords = a.coords.split(' ')
       this.currentId = id
       if (shape === 'circle') {
-        const act = new CreateCircleAction(this, this.getShapeId(), parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10))
+        const act = new CreateCircleAction(this, layerId, this.getShapeId(), parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10))
         this.undoManager.onActionDone(act);
         this.do(act)
       } else if (shape === 'rectangle') {
-        const act = new CreateRectangleAction(this, this.getShapeId(), parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10), parseInt(coords[3], 10))
+        const act = new CreateRectangleAction(this, layerId, this.getShapeId(), parseInt(coords[0], 10), parseInt(coords[1], 10), parseInt(coords[2], 10), parseInt(coords[3], 10))
         this.undoManager.onActionDone(act);
         this.do(act)
       }

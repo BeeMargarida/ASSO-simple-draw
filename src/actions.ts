@@ -9,12 +9,11 @@ export interface Action<T> {
 }
 
 abstract class CreateShapeAction<S extends Shape> implements Action<S> {
-    // saved: boolean = false
-
-    constructor(private doc: SimpleDrawDocument, public readonly shape: S) { }
+    
+    constructor(private doc: SimpleDrawDocument, public layer: number, public readonly shape: S) { }
 
     do(): S {
-        this.doc.add(this.shape)
+        this.doc.add(this.shape, this.layer)
         return this.shape
     }
 
@@ -73,14 +72,15 @@ export class DeleteShapeAction<S extends Shape> implements Action<S> {
 }
 
 export class CreateCircleAction extends CreateShapeAction<Circle> {
-    constructor(doc: SimpleDrawDocument, private id: number, private x: number, private y: number, private radius: number) {
-        super(doc, new Circle(id, x, y, radius))
+    constructor(doc: SimpleDrawDocument, public layer: number, private id: number, private x: number, private y: number, private radius: number) {
+        super(doc, layer, new Circle(id, x, y, radius))
     }
 
     serialize(): string {
         let action = {
             type: 'create',
             shape: 'circle',
+            layer: this.layer,
             id: this.id,
             coords: '' + this.x + ' ' + this.y + ' ' + this.radius
         }
@@ -89,14 +89,15 @@ export class CreateCircleAction extends CreateShapeAction<Circle> {
 }
 
 export class CreateRectangleAction extends CreateShapeAction<Rectangle> {
-    constructor(doc: SimpleDrawDocument, private id: number, private x: number, private y: number, private width: number, private height: number) {
-        super(doc, new Rectangle(id, x, y, width, height))
+    constructor(doc: SimpleDrawDocument, private id: number, public layer: number, private x: number, private y: number, private width: number, private height: number) {
+        super(doc, layer, new Rectangle(id, x, y, width, height))
     }
 
     serialize(): string {
         let action = {
             type: 'create',
             shape: 'rectangle',
+            layer: this.layer,
             id: this.id,
             coords: '' + this.x + ' ' + this.y + ' ' + this.width + ' ' + this.height
         }
