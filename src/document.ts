@@ -195,15 +195,6 @@ export class SimpleDrawDocument {
     const action = new DeleteLayerAction(this, layer, new Date())
     this.communicationManager.send(action.serialize())
     return this.do(action)
-
-    // if (this.layers.length != 1) {
-    //   this.layers.splice(layer, 1)
-    //   this.selectedLayer = this.selectedLayer == 0 ? 0 : this.selectedLayer - 1
-    //   this.updateDisabledButtons()
-    // }
-
-    // if(initiator)
-    //   this.communicationManager.send(JSON.stringify({ type: "deleteLayer", layer: layer}))
   }
 
   updateDisabledButtons(): void {
