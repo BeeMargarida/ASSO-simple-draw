@@ -62,7 +62,52 @@ The shape tools implementation is modular, so to add new tools, e.g. rotation of
 
 #### Area Selection
 The system allows the user to temporarily select an area that can contain several shapes. With this, the user can make actions to the selected number. To make this possible and very modular, we used the **Composite Pattern**, so that a AreaSelected is a Shape that contains several Shapes, as we can see in the code below:
-![Area Selection Composite](./prints/composite.png)
+
+```typescript
+export class AreaSelected extends Shape {
+    selectedShapes: Array<Shape>
+
+    constructor(public id: number, public x: number, public y: number, public width: number, public height: number, public shapes: Array<Shape>) {
+        super(id, x, y)
+        this.centerX = x + width / 2
+        this.centerY = y + height / 2
+        this.color = 'yellow'
+        this.selectedShapes = shapes
+    }
+
+    updateCenter() {
+        this.centerX = this.x + this.width / 2
+        this.centerY = this.y + this.height / 2
+    }
+
+    udpateSelectedShapes(shapes: Array<Shape>): void {
+        this.selectedShapes = shapes
+    }
+
+    checkIfHit(mx: number, my: number, render: CanvasRender | SVGRender): boolean {
+        var sx = getCoordWithZoom(this.x, render.originalCenterX, render.centerX, render.zoom)
+        var sy = getCoordWithZoom(this.y, render.originalCenterY, render.centerY, render.zoom)
+        if (mx >= sx && my >= sy && mx <= sx + this.width * render.zoom && my <= sy + this.height * render.zoom)
+            return true
+        return false
+    }
+
+    checkIfBetween(startX: number, startY: number, width: number, height: number, render: CanvasRender | SVGRender): boolean {
+        var sx = getCoordWithZoom(this.x, render.originalCenterX, render.centerX, render.zoom)
+        var sy = getCoordWithZoom(this.y, render.originalCenterY, render.centerY, render.zoom)
+        var lastX = startX + width
+        var lastY = startY + height
+        if (startX <= sx && (sx + this.width * render.zoom) <= lastX && startY <= sy && (sy + this.height * render.zoom) <= lastY)
+            return true
+        return false
+    }
+
+    toString(): string {
+        return 'Area Selected'
+    }
+}
+```
+
 With this, it is possible to do shape actions, like translate, and the class AreaSelected specifies this action for itself. This allows the selection to be modular and iterate above the Shape class.
 The diagram below shows the relation between the AreaSelected and the shapes. It is important to refer that an AreaSelected cannot contain another AreaSelected inside it, because it makes no sense in the context.
 
@@ -80,13 +125,73 @@ This approach consists of a **MVC** application, in which the Shape class is the
 To support viewport tools, we use mouse events, such as the scroll event to zoom in or zoom out on the scene, or the click and drag (mousedown + mouseup with different coordinates) to translate the whole scene. This problem takes advantage of the previous one (**Multiple views of the same model in the screen**), in the sense that it only applies the viewport tool to the viewport where the mouse is, not affecting the others. It also takes advantage of the **Strategy** described on the first problem (**SVG & Canvas**), since each viewport (render) is independent from all others, so actions taken on one viewport don't affect the others.
 On the image below, we can see the four "tools" implemented for the existing renders, draw, setStyle, applyZoom and translate. To add more tools, for example, rotate the viewport, the developer needs to add a method to the renders (and the Render interface) that implements the desired tool.
 
-![image](https://user-images.githubusercontent.com/22330550/59570696-33323a00-9094-11e9-9797-865c3e666354.png)
+```typescript
+draw(...objs: Array<Shape>): void {
+    this.style.draw(this, ...objs)
+}
+
+setStyle(style: Style): void {
+    this.style = style
+}
+
+applyZoom(val: number): void {
+    val = val > 0 ? 6 / 5 : 5 / 6
+    this.zoom *= val
+}
+
+translateScene(xd: number, yd: number): void {
+    this.centerX += xd
+    this.centerY += yd
+}
+```
 
 #### Different view styles per viewport
 To make the styling possible we used the **Strategy Pattern**, where each render has a *Style*. We also used the **State Pattern** to change the style when the user clicks in the *Color/Stroke* button. We currently have 2 styles: *Wireframe* and *Color*. However, it is easy to expand and add more: create 2 classes (one for SVG and other for Canvas) that implement the interface *Style*, and the method *draw* is the one responsible for implementing the drawing logic. 
 There was also a possibility of doing this with the *Decorator Pattern*, however we didn't want to implement one or more styles at the same time and we wanted to be able to change styles at runtime.
 Below we can see the *Style* interface and an implemention of the Color mode for Canvas as well as the functionality in action:
-![ViewStyles Code](./prints/styles.png)
+```typescript
+export interface Style {
+    draw(render: Render, ...objs: Array<Shape>): void
+}
+
+export class ColorCanvasRender implements Style {
+
+    draw(render: CanvasRender, ...objs: Array<Shape>): void {
+        render.ctx.clearRect(0, 0, render.canvas.width, render.canvas.height)
+        render.ctx.fillRect(render.centerX, render.centerY, 1, 1); // fill in the pixel at (10,10)
+        for (const shape of objs) {
+            if (shape instanceof Circle) {
+                render.ctx.beginPath()
+                render.ctx.fillStyle = shape.color
+                render.ctx.ellipse(
+                    getCoordWithZoom(shape.x, render.originalCenterX, render.centerX, render.zoom),
+                    getCoordWithZoom(shape.y, render.originalCenterY, render.centerY, render.zoom),
+                    shape.radius * render.zoom,
+                    shape.radius * render.zoom,
+                    0, 0, 2 * Math.PI)
+                render.ctx.fill()
+            } else if (shape instanceof Rectangle) {
+                render.ctx.fillStyle = shape.color
+                render.ctx.fillRect(
+                    getCoordWithZoom(shape.x, render.originalCenterX, render.centerX, render.zoom),
+                    getCoordWithZoom(shape.y, render.originalCenterY, render.centerY, render.zoom),
+                    shape.width * render.zoom,
+                    shape.height * render.zoom
+                )
+            }
+            else if (shape instanceof AreaSelected) {
+                render.ctx.strokeStyle = shape.color
+                render.ctx.strokeRect(
+                    getCoordWithZoom(shape.x, render.originalCenterX, render.centerX, render.zoom),
+                    getCoordWithZoom(shape.y, render.originalCenterY, render.centerY, render.zoom),
+                    shape.width * render.zoom,
+                    shape.height * render.zoom
+                )
+            }
+        }
+    }
+}
+```
 ![ViewStyles](./prints/styles_imp.png)
 
 #### Two interaction modes: *point-n-click* and *REPLs*
@@ -130,7 +235,7 @@ If we had more time, we could have improved the communication system, added more
 
 ## Honorable Mentions 
 
-The following persons contributed to the first stages of the project (developed in class)
+The following people contributed to the first stages of the project (developed in class)
 
 * André Cruz
 * Davide Costa
